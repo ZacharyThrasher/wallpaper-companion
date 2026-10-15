@@ -1,0 +1,423 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-15T04:17:14.033Z",
+  "title": "Design System: Wallpaper Companion",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Sage",
+        "tonalRamp": [
+          "oklch(15.00% 0.04821 153.70)",
+          "oklch(26.43% 0.04821 153.70)",
+          "oklch(37.86% 0.04821 153.70)",
+          "oklch(49.29% 0.04821 153.70)",
+          "oklch(60.71% 0.04821 153.70)",
+          "oklch(72.14% 0.04821 153.70)",
+          "oklch(83.57% 0.04821 153.70)",
+          "oklch(95.00% 0.04821 153.70)"
+        ]
+      },
+      "selection-surface": {
+        "role": "primary",
+        "displayName": "Deep Sage",
+        "tonalRamp": [
+          "oklch(15.00% 0.02036 159.39)",
+          "oklch(26.43% 0.02036 159.39)",
+          "oklch(37.86% 0.02036 159.39)",
+          "oklch(49.29% 0.02036 159.39)",
+          "oklch(60.71% 0.02036 159.39)",
+          "oklch(72.14% 0.02036 159.39)",
+          "oklch(83.57% 0.02036 159.39)",
+          "oklch(95.00% 0.02036 159.39)"
+        ]
+      },
+      "selection-ink": {
+        "role": "primary",
+        "displayName": "Pale Sage",
+        "tonalRamp": [
+          "oklch(15.00% 0.03175 154.13)",
+          "oklch(26.43% 0.03175 154.13)",
+          "oklch(37.86% 0.03175 154.13)",
+          "oklch(49.29% 0.03175 154.13)",
+          "oklch(60.71% 0.03175 154.13)",
+          "oklch(72.14% 0.03175 154.13)",
+          "oklch(83.57% 0.03175 154.13)",
+          "oklch(95.00% 0.03175 154.13)"
+        ]
+      },
+      "available-ink": {
+        "role": "primary",
+        "displayName": "Soft Sage Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.02708 155.89)",
+          "oklch(26.43% 0.02708 155.89)",
+          "oklch(37.86% 0.02708 155.89)",
+          "oklch(49.29% 0.02708 155.89)",
+          "oklch(60.71% 0.02708 155.89)",
+          "oklch(72.14% 0.02708 155.89)",
+          "oklch(83.57% 0.02708 155.89)",
+          "oklch(95.00% 0.02708 155.89)"
+        ]
+      },
+      "tag-surface": {
+        "role": "primary",
+        "displayName": "Dark Sage Tag",
+        "tonalRamp": [
+          "oklch(15.00% 0.01034 176.53)",
+          "oklch(26.43% 0.01034 176.53)",
+          "oklch(37.86% 0.01034 176.53)",
+          "oklch(49.29% 0.01034 176.53)",
+          "oklch(60.71% 0.01034 176.53)",
+          "oklch(72.14% 0.01034 176.53)",
+          "oklch(83.57% 0.01034 176.53)",
+          "oklch(95.00% 0.01034 176.53)"
+        ]
+      },
+      "warning-ink": {
+        "role": "secondary",
+        "displayName": "Warm Sand",
+        "tonalRamp": [
+          "oklch(15.00% 0.05662 73.10)",
+          "oklch(26.43% 0.05662 73.10)",
+          "oklch(37.86% 0.05662 73.10)",
+          "oklch(49.29% 0.05662 73.10)",
+          "oklch(60.71% 0.05662 73.10)",
+          "oklch(72.14% 0.05662 73.10)",
+          "oklch(83.57% 0.05662 73.10)",
+          "oklch(95.00% 0.05662 73.10)"
+        ]
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "Ice Focus",
+        "tonalRamp": [
+          "oklch(15.00% 0.04837 236.87)",
+          "oklch(26.43% 0.04837 236.87)",
+          "oklch(37.86% 0.04837 236.87)",
+          "oklch(49.29% 0.04837 236.87)",
+          "oklch(60.71% 0.04837 236.87)",
+          "oklch(72.14% 0.04837 236.87)",
+          "oklch(83.57% 0.04837 236.87)",
+          "oklch(95.00% 0.04837 236.87)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Charcoal Canvas",
+        "tonalRamp": [
+          "oklch(15.00% 0.00365 228.98)",
+          "oklch(26.43% 0.00365 228.98)",
+          "oklch(37.86% 0.00365 228.98)",
+          "oklch(49.29% 0.00365 228.98)",
+          "oklch(60.71% 0.00365 228.98)",
+          "oklch(72.14% 0.00365 228.98)",
+          "oklch(83.57% 0.00365 228.98)",
+          "oklch(95.00% 0.00365 228.98)"
+        ]
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "Deep Charcoal",
+        "tonalRamp": [
+          "oklch(15.00% 0.00373 229.01)",
+          "oklch(26.43% 0.00373 229.01)",
+          "oklch(37.86% 0.00373 229.01)",
+          "oklch(49.29% 0.00373 229.01)",
+          "oklch(60.71% 0.00373 229.01)",
+          "oklch(72.14% 0.00373 229.01)",
+          "oklch(83.57% 0.00373 229.01)",
+          "oklch(95.00% 0.00373 229.01)"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised Charcoal",
+        "tonalRamp": [
+          "oklch(15.00% 0.00477 219.65)",
+          "oklch(26.43% 0.00477 219.65)",
+          "oklch(37.86% 0.00477 219.65)",
+          "oklch(49.29% 0.00477 219.65)",
+          "oklch(60.71% 0.00477 219.65)",
+          "oklch(72.14% 0.00477 219.65)",
+          "oklch(83.57% 0.00477 219.65)",
+          "oklch(95.00% 0.00477 219.65)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Pale Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.00170 145.56)",
+          "oklch(26.43% 0.00170 145.56)",
+          "oklch(37.86% 0.00170 145.56)",
+          "oklch(49.29% 0.00170 145.56)",
+          "oklch(60.71% 0.00170 145.56)",
+          "oklch(72.14% 0.00170 145.56)",
+          "oklch(83.57% 0.00170 145.56)",
+          "oklch(95.00% 0.00170 145.56)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.00786 196.99)",
+          "oklch(26.43% 0.00786 196.99)",
+          "oklch(37.86% 0.00786 196.99)",
+          "oklch(49.29% 0.00786 196.99)",
+          "oklch(60.71% 0.00786 196.99)",
+          "oklch(72.14% 0.00786 196.99)",
+          "oklch(83.57% 0.00786 196.99)",
+          "oklch(95.00% 0.00786 196.99)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Fine Divider",
+        "tonalRamp": [
+          "oklch(15.00% 0.00701 211.04)",
+          "oklch(26.43% 0.00701 211.04)",
+          "oklch(37.86% 0.00701 211.04)",
+          "oklch(49.29% 0.00701 211.04)",
+          "oklch(60.71% 0.00701 211.04)",
+          "oklch(72.14% 0.00701 211.04)",
+          "oklch(83.57% 0.00701 211.04)",
+          "oklch(95.00% 0.00701 211.04)"
+        ]
+      },
+      "field-border": {
+        "role": "neutral",
+        "displayName": "Field Stroke",
+        "tonalRamp": [
+          "oklch(15.00% 0.01026 205.82)",
+          "oklch(26.43% 0.01026 205.82)",
+          "oklch(37.86% 0.01026 205.82)",
+          "oklch(49.29% 0.01026 205.82)",
+          "oklch(60.71% 0.01026 205.82)",
+          "oklch(72.14% 0.01026 205.82)",
+          "oklch(83.57% 0.01026 205.82)",
+          "oklch(95.00% 0.01026 205.82)"
+        ]
+      },
+      "control-hover": {
+        "role": "neutral",
+        "displayName": "Control Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.00712 211.05)",
+          "oklch(26.43% 0.00712 211.05)",
+          "oklch(37.86% 0.00712 211.05)",
+          "oklch(49.29% 0.00712 211.05)",
+          "oklch(60.71% 0.00712 211.05)",
+          "oklch(72.14% 0.00712 211.05)",
+          "oklch(83.57% 0.00712 211.05)",
+          "oklch(95.00% 0.00712 211.05)"
+        ]
+      },
+      "control-active": {
+        "role": "neutral",
+        "displayName": "Pressed Charcoal",
+        "tonalRamp": [
+          "oklch(15.00% 0.01107 179.00)",
+          "oklch(26.43% 0.01107 179.00)",
+          "oklch(37.86% 0.01107 179.00)",
+          "oklch(49.29% 0.01107 179.00)",
+          "oklch(60.71% 0.01107 179.00)",
+          "oklch(72.14% 0.01107 179.00)",
+          "oklch(83.57% 0.01107 179.00)",
+          "oklch(95.00% 0.01107 179.00)"
+        ]
+      },
+      "preview-surface": {
+        "role": "neutral",
+        "displayName": "Preview Charcoal",
+        "tonalRamp": [
+          "oklch(15.00% 0.00740 211.05)",
+          "oklch(26.43% 0.00740 211.05)",
+          "oklch(37.86% 0.00740 211.05)",
+          "oklch(49.29% 0.00740 211.05)",
+          "oklch(60.71% 0.00740 211.05)",
+          "oklch(72.14% 0.00740 211.05)",
+          "oklch(83.57% 0.00740 211.05)",
+          "oklch(95.00% 0.00740 211.05)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Current view heading; reduces on narrow screens."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Secondary headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Readable explanations."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Controls and supporting context."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Wallpaper titles."
+      },
+      "metadata": {
+        "displayName": "Metadata",
+        "purpose": "Types, counts, and tags."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Local scan commands."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "preview-outline",
+        "value": "outline-color 160ms ease-out",
+        "purpose": "Subtle image hover feedback; disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "detail-column-min",
+        "value": "1200px"
+      },
+      {
+        "name": "inline-detail-max",
+        "value": "1199px"
+      },
+      {
+        "name": "narrow-max",
+        "value": "760px"
+      },
+      {
+        "name": "single-column-max",
+        "value": "360px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Compact actions such as retrying a failed index load.",
+      "html": "<button class=\"ds-button\">Try again</button>",
+      "css": ".ds-button{font-family:\"Segoe UI\",system-ui,sans-serif;font-size:1rem;color:#edeeed;background:var(--raised,#222526);border:1px solid var(--line,#363b3c);border-radius:6px;padding:10px 14px;min-height:42px;cursor:pointer}.ds-button:hover{background:#303536}.ds-button:active{background:#3b4341}.ds-button:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}.ds-button:disabled{opacity:.55;cursor:wait}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Subordinate header and detail actions.",
+      "html": "<button class=\"ds-quiet\">Reload view</button>",
+      "css": ".ds-quiet{font-family:\"Segoe UI\",system-ui,sans-serif;font-size:.8rem;color:#edeeed;background:transparent;border:1px solid var(--line,#363b3c);border-radius:6px;padding:7px 10px;min-height:36px;cursor:pointer}.ds-quiet:hover{background:#303536}.ds-quiet:active{background:#3b4341}.ds-quiet:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}.ds-quiet:disabled{opacity:.55;cursor:wait}"
+    },
+    {
+      "name": "Text Action",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "A compact clear-filters action.",
+      "html": "<button class=\"ds-text\">Clear filters</button>",
+      "css": ".ds-text{font-family:\"Segoe UI\",system-ui,sans-serif;font-size:.8rem;background:transparent;border:0;border-radius:6px;color:var(--accent,#b5d6be);padding:4px 0;min-height:32px;cursor:pointer}.ds-text:hover{text-decoration:underline;text-underline-offset:4px}.ds-text:active{background:#3b4341}.ds-text:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}"
+    },
+    {
+      "name": "Labeled Search",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Search titles without removing the visible label.",
+      "html": "<label class=\"ds-search\">Search titles<input type=\"search\" placeholder=\"Find a wallpaper\"></label>",
+      "css": ".ds-search{font-family:\"Segoe UI\",system-ui,sans-serif;display:block;max-width:480px;font-size:.8rem;color:var(--muted,#aeb5b5)}.ds-search input{font-family:\"Segoe UI\",system-ui,sans-serif;display:block;margin-top:7px;font-size:1rem;color:#edeeed;background:var(--rail,#141617);border:1px solid #505859;border-radius:5px;min-height:42px;padding:9px 12px;width:100%;caret-color:var(--accent,#b5d6be)}.ds-search input::placeholder{color:var(--muted,#aeb5b5)}.ds-search input:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}"
+    },
+    {
+      "name": "Playlist Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "A selected library row and saved playlist with quiet counts.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Library and playlists\"><button class=\"ds-nav-item ds-nav-selected\" aria-current=\"page\">All wallpapers <span>24</span></button><button class=\"ds-nav-item\">Evening collection <span>6</span></button></nav>",
+      "css": ".ds-nav{font-family:\"Segoe UI\",system-ui,sans-serif;width:232px;background:var(--rail,#141617);padding:16px}.ds-nav-item{font-family:\"Segoe UI\",system-ui,sans-serif;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:.875rem;color:#edeeed;background:transparent;border:0;border-radius:5px;padding:11px 12px;min-height:44px;cursor:pointer}.ds-nav-item span{font-size:.75rem;color:var(--muted,#aeb5b5);font-variant-numeric:tabular-nums}.ds-nav-item:hover{background:#303536}.ds-nav-item:active{background:#3b4341}.ds-nav-selected{background:#29352e;color:#d1e7d7}.ds-nav-selected span{color:#c3d6c9}.ds-nav-item:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}"
+    },
+    {
+      "name": "Native View Selector",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Narrow-screen replacement for the playlist rail.",
+      "html": "<label class=\"ds-view\">View<select><option>All wallpapers</option><option>Evening collection (6)</option></select></label>",
+      "css": ".ds-view{font-family:\"Segoe UI\",system-ui,sans-serif;display:flex;gap:12px;align-items:center;font-size:.8rem;color:var(--muted,#aeb5b5)}.ds-view select{font-family:\"Segoe UI\",system-ui,sans-serif;font-size:1rem;flex:1;min-width:0;max-width:100%;color:#edeeed;background:var(--rail,#141617);border:1px solid #505859;border-radius:5px;min-height:42px;padding:9px 12px;cursor:pointer;color-scheme:dark}.ds-view select:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}"
+    },
+    {
+      "name": "Descriptive Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Read-only wallpaper metadata, rather than a filter action.",
+      "html": "<span class=\"ds-tag\">Landscape</span>",
+      "css": ".ds-tag{font-family:\"Segoe UI\",system-ui,sans-serif;display:inline-block;padding:5px 8px;background:#29302e;color:#c3d6c9;font-size:.75rem;border-radius:4px}"
+    },
+    {
+      "name": "Gallery Item",
+      "kind": "card",
+      "refersTo": "wallpaper",
+      "description": "An image region with a flat caption and selected outline; demo omits private artwork.",
+      "html": "<button class=\"ds-wallpaper\" aria-pressed=\"true\"><span class=\"ds-preview\">No image preview</span><span class=\"ds-caption\"><strong>Evening landscape</strong><span class=\"ds-meta\">Scene</span></span></button>",
+      "css": ".ds-wallpaper{font-family:\"Segoe UI\",system-ui,sans-serif;display:block;width:260px;background:transparent;border:0;border-radius:0;padding:0;text-align:left;color:#edeeed;cursor:pointer}.ds-preview{display:flex;aspect-ratio:16/10;align-items:center;justify-content:center;background:#232829;border-radius:8px;color:#c3cbca;font-size:.875rem;outline:1px solid transparent;outline-offset:3px;transition:outline-color 160ms ease-out}.ds-caption{display:block;padding-top:12px;line-height:1.4}.ds-caption strong{font-size:.875rem;font-weight:500;overflow-wrap:anywhere}.ds-meta{display:block;margin-top:4px;font-size:.75rem;color:var(--muted,#aeb5b5)}.ds-wallpaper:hover .ds-preview{outline-color:#6e7a75}.ds-wallpaper[aria-pressed=true] .ds-preview{outline:2px solid var(--accent,#b5d6be)}.ds-wallpaper:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-preview{transition:none}}"
+    },
+    {
+      "name": "Native Filter Disclosure",
+      "kind": "custom",
+      "description": "Progressive disclosure keeps secondary fields out of the scanning view.",
+      "html": "<details class=\"ds-filters\"><summary>Filters</summary><p class=\"ds-filter-copy\">Type, tag, and availability controls appear here.</p></details>",
+      "css": ".ds-filters{font-family:\"Segoe UI\",system-ui,sans-serif;color:#edeeed;font-size:.875rem}.ds-filters summary{width:fit-content;padding:9px 12px;min-height:42px;border:1px solid #505859;border-radius:5px;cursor:pointer;white-space:nowrap}.ds-filters summary:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}.ds-filter-copy{margin:16px 0 0;color:var(--muted,#aeb5b5);font-size:.8rem}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Local Gallery",
+    "overview": "A charcoal workspace gives wallpaper imagery the visual lead. Familiar system typography, restrained sage selection, and compact native controls keep the interface calm and immediately usable.\n\nThe system favors useful density and progressive disclosure: titles and previews support scanning; additional metadata appears when requested. Surfaces are understated, with tonal differences and fine borders providing structure.",
+    "keyCharacteristics": [
+      "Charcoal surfaces with pale primary ink and readable secondary ink.",
+      "Segoe UI and system sans throughout the interface.",
+      "Restrained sage selection and distinct keyboard focus.",
+      "Image-led content with flat captions and native controls.",
+      "Optional details and disclosures that protect the scanning rhythm."
+    ],
+    "rules": [
+      {
+        "name": "The State Has Meaning Rule",
+        "body": "Reserve sage for selection and small functional accents; availability and warning colors accompany readable status text.",
+        "section": "colors"
+      },
+      {
+        "name": "The Familiar Voice Rule",
+        "body": "Use the same system sans across controls and content; establish hierarchy through size, weight, and spacing.",
+        "section": "typography"
+      },
+      {
+        "name": "The Progressive Disclosure Rule",
+        "body": "Keep source paths, diagnostics, and secondary filters behind native disclosures until requested.",
+        "section": "layout"
+      },
+      {
+        "name": "The Tonal Structure Rule",
+        "body": "Separate regions through tone and spacing; keep gallery images on the canvas without enclosing raised cards.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do let wallpaper imagery lead while controls and metadata stay quiet.",
+      "Do preserve native selects, disclosures, visible labels, and keyboard focus.",
+      "Do pair state colors with explicit text and preserve unavailable image regions.",
+      "Do use progressive disclosure for source paths, diagnostics, and secondary filters.",
+      "Do preserve long-title wrapping and the narrow selector with inline details."
+    ],
+    "donts": [
+      "Don't add decorative gradients, nested cards, or emojis.",
+      "Don't turn library browsing into a metrics dashboard.",
+      "Don't use sage as a large decorative fill.",
+      "Don't expose all source metadata in the primary scanning view.",
+      "Don't replace the approved system sans with decorative display typography."
+    ]
+  }
+}
