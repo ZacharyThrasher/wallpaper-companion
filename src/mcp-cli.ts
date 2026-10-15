@@ -2,7 +2,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { serveStdio, type StdioServerHandle } from '@modelcontextprotocol/server/stdio';
-import { defaultDatabasePath } from './cli.js';
+import { defaultDatabasePath } from './adapters/database-path.js';
 import { openReadOnlyCatalog } from './mcp/index.js';
 import { createCatalogMcpServer } from './mcp/server.js';
 

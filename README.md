@@ -2,7 +2,7 @@
 
 A Windows companion for finding and organizing Wallpaper Engine wallpapers using your existing playlists and guidance.
 
-The first feature is a read-only local catalog and CLI. An explicit scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands use the snapshot without rescanning. No wallpaper controls, installation, or source configuration writes are implemented.
+The read-only local catalog is available through a CLI and a [local stdio MCP server](docs/local-mcp.md). An explicit CLI scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands and MCP tools use the snapshot without rescanning. No wallpaper controls, installation, or source configuration writes are implemented.
 
 Requires Node **24.11.1 or newer in the 24.x line**. The built-in `node:sqlite` module is experimental and emits a warning to stderr; JSON output remains on stdout. No native compiled dependencies are installed.
 
@@ -66,6 +66,6 @@ Developer interfaces are stable for the first adapters:
 
 Future preview-serving adapters should call `Catalog.getPreview(wallpaperId)` and revalidate its registered project-relative path against disk before opening. This feature exposes no arbitrary-file serving endpoint. The service has no filesystem dependencies. The SQLite adapter reads and filters a complete snapshot in memory; this is suitable for the current local library size but needs reconsideration for very large catalogs.
 
-Run `npm run check` and `npm test`. Tests use only temporary synthetic files and the built-in Node test runner. CI covers Windows and Linux, Node 24.11.1 and current 24.x. Node 24.11.1 was verified locally, including its experimental SQLite API. No MCP, GUI, taste inference, remote bridge, wallpaper control, automatic subscription, or client compatibility is included in this feature.
+Run `npm run check` and `npm test`. Tests use only temporary synthetic files and the built-in Node test runner. CI is configured for Windows and Linux, Node 24.11.1 and current 24.x; remote execution remains subject to the account's Actions budget. Node 24.11.1 was verified locally, including its experimental SQLite API. `npm run test:mcp` runs the MCP protocol checks. See [local MCP setup](docs/local-mcp.md) for the six tools, strict argument limits, structured results, and Codex/Claude Code/Claude Desktop/Gemini CLI configuration examples. Those named clients have not been tested. GUI, taste inference, remote bridge, wallpaper control, and automatic subscription are not included.
 
-CEO brief: The CLI safely catalogs the local library and saved playlists, preserves unresolved entries, and keeps the previous index after failures. It supplies the shared backend for future interfaces. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
+CEO brief: The CLI catalogs the local library and saved playlists, while the local MCP server lets AI clients query the same snapshot without writes. Named client setup still needs validation. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
