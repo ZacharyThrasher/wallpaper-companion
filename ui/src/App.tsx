@@ -77,6 +77,11 @@ export function App() {
     loadLibrary(controller.signal)
       .then((data) => {
         setLibrary(data);
+        setPlaylistId((current) =>
+          data.playlists.some((playlist) => playlist.id === current)
+            ? current
+            : "",
+        );
         setSelected(undefined);
       })
       .catch((reason) => {

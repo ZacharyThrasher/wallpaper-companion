@@ -204,3 +204,23 @@ test("empty playlists remain selectable", async () => {
   await user.click(screen.getByRole("button", { name: /Quiet evenings/ }));
   await screen.findByRole("heading", { name: "This playlist is empty" });
 });
+
+test("reloading a removed or renamed playlist resets both view selectors and details", async () => {
+  const replacement = library();
+  replacement.playlists = [{ ...playlist, id: "pl_renamed", name: "Renamed playlist" }];
+  vi.mocked(loadLibrary)
+    .mockResolvedValueOnce(library())
+    .mockResolvedValueOnce(replacement);
+  const user = userEvent.setup();
+  render(<App />);
+  await screen.findByRole("searchbox");
+  await user.click(screen.getByRole("button", { name: /Quiet evenings/ }));
+  await user.click(screen.getByRole("button", { name: "View Alpine light, entry 3" }));
+  expect(screen.getByRole("complementary")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Reload view" }));
+  await screen.findByRole("heading", { name: "Your library" });
+  expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^All wallpapers/ })).toHaveAttribute("aria-current", "page");
+  expect(screen.getByLabelText("View", { exact: true })).toHaveValue("");
+  expect(screen.getByRole("button", { name: /Renamed playlist/ })).not.toHaveAttribute("aria-current");
+});
