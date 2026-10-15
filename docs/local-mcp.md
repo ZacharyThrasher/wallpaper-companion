@@ -1,5 +1,7 @@
 # Local catalog MCP
 
+This document describes the default six-tool read-only mode. `mcp-cli --companion` explicitly opts into [guided discovery, preferences, registered preview images and playback tools](discovery.md); it does not change the default factory or HTTP bridge. Companion mode still has no scan tool.
+
 The local stdio server exposes the shared catalog's read API through the official TypeScript MCP SDK. It opens only the configured companion SQLite index, always read-only. It never scans or opens wallpaper/media/config files. Each operation opens and closes its own SQLite handle, so a later explicit CLI scan is visible without reconnecting.
 
 ## Build and start

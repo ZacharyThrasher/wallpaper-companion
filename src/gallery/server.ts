@@ -4,6 +4,14 @@ import path from "node:path";
 import { Catalog, type Query } from "../catalog.js";
 import { CatalogError } from "../domain.js";
 import { inside } from "../adapters/files.js";
+import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { ZodError } from 'zod/v4';
+import { WorkflowError } from '../workflow/preferences.js';
+import { WorkshopError } from '../workshop/types.js';
+import { PlaybackError } from '../playback/types.js';
+import type { WorkflowService } from '../workflow/service.js';
+import type { PlaybackService } from '../playback/service.js';
+import * as z from 'zod/v4';
 
 const MAX_PREVIEW = 16 * 1024 * 1024;
 const identifier = /^[a-z][a-z0-9]*_[a-zA-Z0-9_-]{1,128}$/;
@@ -165,9 +173,35 @@ export interface GalleryOptions {
   catalog: () => Catalog;
   uiDirectory: string;
   scanCommand?: string;
+  companion?: {
+    workflow: WorkflowService;
+    playback: Pick<PlaybackService, 'applyWallpaper' | 'activatePlaylist' | 'readCurrent'>;
+    refreshLibrary: () => Promise<unknown>;
+  };
+}
+const actionId = z.string().regex(/^(wp|pl)_[a-f0-9]{32}$/);
+const applySchema = z.strictObject({ wallpaperId: actionId, monitor: z.number().int().min(0).max(63).default(0) });
+const playSchema = z.strictObject({ playlistId: actionId, monitor: z.number().int().min(0).max(63).default(0) });
+async function body(request: IncomingMessage): Promise<unknown> {
+  if (request.headers['content-type'] !== 'application/json') throw new WorkflowError('INVALID_BODY', 'Use application/json.');
+  const chunks: Buffer[] = []; let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > 100_000) throw new WorkflowError('INVALID_BODY', 'Request body exceeds 100,000 bytes.');
+    chunks.push(Buffer.from(chunk));
+  }
+  try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+  catch { throw new WorkflowError('INVALID_BODY', 'Expected a JSON object.'); }
 }
 /** The caller must listen on 127.0.0.1. No CORS or remote-origin access is provided. */
 export function createGalleryServer(options: GalleryOptions) {
+  const csrf = randomBytes(32).toString('hex');
+  let playbackBusy = false;
+  async function playbackAction<T>(action: () => Promise<T>) {
+    if (playbackBusy) throw new WorkflowError('PLAYBACK_BUSY', 'Another playback action is running. Read current state before retrying.');
+    playbackBusy = true;
+    try { return await action(); } finally { playbackBusy = false; }
+  }
   return http.createServer(
     async (request: IncomingMessage, response: ServerResponse) => {
       response.setHeader("Cache-Control", "no-store");
@@ -176,7 +210,7 @@ export function createGalleryServer(options: GalleryOptions) {
       response.setHeader("Cross-Origin-Resource-Policy", "same-origin");
       response.setHeader(
         "Content-Security-Policy",
-        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://steamuserimages-a.akamaihd.net https://images.steamusercontent.com https://shared.fastly.steamstatic.com https://shared.akamai.steamstatic.com https://shared.steamstatic.com; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
       );
       const authority = `127.0.0.1:${request.socket.localPort}`;
       if (
@@ -196,7 +230,7 @@ export function createGalleryServer(options: GalleryOptions) {
         );
         return;
       }
-      if (request.method !== "GET" && request.method !== "HEAD") {
+      if (request.method !== "GET" && request.method !== "HEAD" && !(request.method === 'POST' && options.companion)) {
         response.setHeader("Allow", "GET, HEAD");
         failure(
           response,
@@ -208,10 +242,39 @@ export function createGalleryServer(options: GalleryOptions) {
       }
       try {
         const url = new URL(request.url ?? "/", `http://${authority}`);
+        if (request.method === 'POST') {
+          const token = request.headers['x-companion-csrf'];
+          if (request.headers.origin !== `http://${authority}` || typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token) ||
+            !timingSafeEqual(Buffer.from(token), Buffer.from(csrf))) {
+            failure(response, 403, 'CSRF_DENIED', 'Reload the view before trying this action.'); return;
+          }
+          if (url.search) throw new WorkflowError('INVALID_ARGUMENT', 'Actions do not accept query parameters.');
+          const input = await body(request); const companion = options.companion!; let result: unknown;
+          if (url.pathname === '/api/preferences') result = companion.workflow.save(input);
+          else if (url.pathname === '/api/discover') result = await companion.workflow.discover(input);
+          else if (url.pathname === '/api/inspect') result = await companion.workflow.inspect(input);
+          else if (url.pathname === '/api/apply') { const args = applySchema.parse(input); result = await playbackAction(() => companion.playback.applyWallpaper(args)); }
+          else if (url.pathname === '/api/play-playlist') { const args = playSchema.parse(input); result = await playbackAction(() => companion.playback.activatePlaylist(args)); }
+          else if (url.pathname === '/api/refresh') { z.strictObject({}).parse(input); result = await companion.refreshLibrary(); }
+          else { failure(response, 404, 'NOT_FOUND', 'Unknown action.'); return; }
+          response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          response.end(JSON.stringify(result)); return;
+        }
         if (url.pathname.startsWith("/api/")) {
           const catalog = options.catalog();
           let result: unknown;
-          if (url.pathname === "/api/status")
+          if (url.pathname === '/api/session' && options.companion && !url.search) result = { csrf };
+          else if (['/api/discovery-context', '/api/shortlist'].includes(url.pathname) && options.companion) {
+            const params = [...url.searchParams.keys()];
+            if (url.searchParams.getAll('reference').length !== 1 || url.searchParams.getAll('offset').length > 1 || params.some(p => p !== 'reference' && !(url.pathname === '/api/shortlist' && p === 'offset')))
+              throw new WorkflowError('INVALID_ARGUMENT', 'Provide one reference and optional shortlist offset.');
+            const reference = url.searchParams.get('reference')!;
+            const offset = url.searchParams.get('offset') ?? '0';
+            if (!/^\d{1,4}$/.test(offset)) throw new WorkflowError('INVALID_ARGUMENT', 'Invalid shortlist offset.');
+            result = url.pathname === '/api/shortlist' ? await options.companion.workflow.shortlist(reference, Number(offset)) : options.companion.workflow.context(reference);
+          }
+          else if (url.pathname === '/api/current' && options.companion && !url.search) result = await playbackAction(() => options.companion!.playback.readCurrent({ monitor: 0 }));
+          else if (url.pathname === "/api/status")
             result = {
               ...catalog.status(),
               scanCommand:
@@ -278,6 +341,13 @@ export function createGalleryServer(options: GalleryOptions) {
         });
         response.end(request.method === "HEAD" ? undefined : bytes);
       } catch (error) {
+        if (error instanceof ZodError) { failure(response, 400, 'INVALID_ARGUMENT', 'Invalid or oversized action fields.'); return; }
+        if (error instanceof WorkflowError || error instanceof PlaybackError || error instanceof WorkshopError) {
+          const status = error.code === 'PREFERENCE_CONFLICT' ? 409 : error.code.startsWith('INVALID') || error.code === 'invalid_input' ? 400 : 503;
+          response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+          response.end(JSON.stringify({ error: { code: error.code, message: error.message,
+            ...(error instanceof PlaybackError ? { mayHaveApplied: error.mayHaveApplied } : {}) } })); return;
+        }
         if (error instanceof URIError) {
           failure(response, 400, "INVALID_ARGUMENT", "Malformed resource URL.");
           return;
