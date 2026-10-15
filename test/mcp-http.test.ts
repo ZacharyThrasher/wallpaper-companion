@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { request } from 'node:http';
+import { createConnection } from 'node:net';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
@@ -304,6 +305,28 @@ test('absolute deadline bounds an incomplete authenticated body', { timeout: req
   });
   assert.equal(response.status, 408); assert.equal(f.reads(), 0);
   assert.match(response.text, /Request timed out/);
+});
+
+test('partial HTTP headers close within the configured header deadline and checking interval', { timeout: 8_500 }, async t => {
+  const f = fixture(); const server = await startHttpMcp(f.catalog, { port: 0, auth: bearer }); t.after(server.close);
+  const url = new URL(server.url);
+  const socket = createConnection({ host: '127.0.0.1', port: Number(url.port) });
+  t.after(() => socket.destroy());
+  const started = Date.now();
+  const response = await new Promise<string>((resolve, reject) => {
+    let text = '';
+    const deadline = setTimeout(() => reject(new Error('Partial headers exceeded the bounded header deadline.')), 7_500);
+    t.after(() => clearTimeout(deadline));
+    socket.on('data', chunk => { text += chunk; });
+    socket.once('error', reject);
+    socket.once('close', () => { clearTimeout(deadline); resolve(text); });
+    socket.once('connect', () => socket.write(`POST /mcp HTTP/1.1\r\nHost: ${url.host}\r\n`));
+  });
+  assert.ok(Date.now() - started < 7_500, 'header timeout must run before a 30-second default sweep');
+  assert.ok(Date.now() - started >= 4_500, 'fixture must actually hold incomplete headers open');
+  assert.match(response, /^HTTP\/1.1 400 Bad Request\r\n/);
+  assert.match(response, /"error":"Invalid HTTP request\."/);
+  assert.equal(f.reads(), 0);
 });
 
 test('stop closes active/incomplete connections within a bound and is idempotent', async t => {
