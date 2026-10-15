@@ -68,4 +68,4 @@ Future preview-serving adapters should call `Catalog.getPreview(wallpaperId)` an
 
 Run `npm run check` and `npm test`. Tests use only temporary synthetic files and the built-in Node test runner. CI covers Windows and Linux, Node 24.11.1 and current 24.x. Node 24.11.1 was verified locally, including its experimental SQLite API. No MCP, GUI, taste inference, remote bridge, wallpaper control, automatic subscription, or client compatibility is included in this feature.
 
-CEO brief: The CLI safely catalogs the local library and saved playlists, preserves unresolved entries, and keeps the previous index after failures. It supplies the shared backend for future interfaces. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
+Brief: The CLI safely catalogs the local library and saved playlists, preserves unresolved entries, and keeps the previous index after failures. It supplies the shared backend for future interfaces. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
