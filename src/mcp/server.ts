@@ -2,6 +2,7 @@ import { McpServer, type CallToolResult } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import type { Catalog, Query } from '../catalog.js';
 import { CatalogError, schemaVersion } from '../domain.js';
+import { playlistDetail, playlistSummary, wallpaperDetail, wallpaperSummary } from './projections.js';
 
 /** Deliberately excludes commit and any scanner/filesystem capability. */
 export type ReadOnlyCatalog = Pick<Catalog,
@@ -33,18 +34,20 @@ function failure(error: unknown): CallToolResult {
     : code === 'REVISION_CHANGED' ? 'Restart the list at offset 0 without revision, then use the returned indexRevision.'
     : code === 'NOT_FOUND' ? 'List catalog items again and use an ID from the current index.'
     : 'Check catalog_status and the configured --db path. Rebuild the companion index with the catalog CLI if needed.';
-  return {
-    isError: true,
-    content: [{ type: 'text', text: `${code}: ${message} ${recovery}` }],
-    structuredContent: { schemaVersion, indexRevision: null, observedAt: null,
-      diagnostics: [{ severity: 'error', code, message }], error: { code, message, recovery } }
-  };
+  const structuredContent = { schemaVersion, indexRevision: null, observedAt: null,
+    diagnostics: [{ severity: 'error', code, message }], error: { code, message, recovery } };
+  return { isError: true, structuredContent, content: textContent(structuredContent, `${code}: ${message} ${recovery}`) };
+}
+
+function textContent(value: object, summary: string): CallToolResult['content'] {
+  // Text-only hosts still need IDs and records. Serialize only the projected result.
+  return [{ type: 'text', text: summary }, { type: 'text', text: JSON.stringify(value) }];
 }
 
 function result<T extends object>(read: () => T, describe: (value: T) => string): CallToolResult {
   try {
     const value = read();
-    return { structuredContent: { ...value }, content: [{ type: 'text', text: describe(value) }] };
+    return { structuredContent: { ...value }, content: textContent(value, describe(value)) };
   } catch (error) { return failure(error); }
 }
 
@@ -70,25 +73,37 @@ export function createCatalogMcpServer(catalog: ReadOnlyCatalog): McpServer {
     ? `${s.data.wallpapers} wallpapers, ${s.data.playlists} playlists; index revision ${s.indexRevision}.`
     : `No catalog snapshot is indexed. ${scanRecovery}`));
   server.registerTool('list_wallpapers', {
-    description: 'List indexed wallpapers, sorted by opaque ID, with optional case-insensitive title/type/tag and availability filters. Follow pagination.nextOffset using indexRevision.',
+    description: 'List compact wallpaper summaries (ID, title, type, tags, availability, optional Workshop ID, hasPreview), sorted by opaque ID. Optional case-insensitive title/type/tag and availability filters. Follow pagination.nextOffset using indexRevision.',
     inputSchema: z.strictObject({ ...page,
       type: z.string().min(1).max(128).describe('Exact type, case-insensitive, e.g. scene or video.').optional(),
       tag: z.string().min(1).max(128).describe('Exact tag, case-insensitive.').optional(),
       availability: z.enum(['available', 'missing', 'unsupported']).optional()
     }), annotations
-  }, args => result(() => catalog.listWallpapers(query(args)), s => pageText('wallpapers', s)));
+  }, args => result(() => {
+    const page = catalog.listWallpapers(query(args));
+    return { ...page, data: page.data.map(wallpaperSummary) };
+  }, s => pageText('wallpapers', s)));
   server.registerTool('get_wallpaper', {
-    description: 'Get one indexed wallpaper by catalog ID, including provenance and metadata. Reads only the catalog snapshot.',
+    description: 'Get normalized wallpaper detail by catalog ID, including registered paths, provenance and observation time. Raw project/cache metadata is omitted in MCP v1. Reads only the catalog snapshot.',
     inputSchema: idSchema, annotations
-  }, ({ id }) => result(() => catalog.getWallpaper(id), s => `Wallpaper returned; index revision ${s.indexRevision}.`));
+  }, ({ id }) => result(() => {
+    const item = catalog.getWallpaper(id);
+    return { ...item, data: wallpaperDetail(item.data) };
+  }, s => `Wallpaper returned; index revision ${s.indexRevision}.`));
   server.registerTool('list_playlists', {
-    description: 'List saved playlists from the snapshot, sorted by opaque ID, with optional name search. Preserves member order and unresolved references; does not infer an active playlist.',
+    description: 'List compact saved-playlist summaries (ID, name, memberCount, unresolvedCount), sorted by opaque ID, with optional name search. Use get_playlist for ordered members. Does not infer an active playlist.',
     inputSchema: z.strictObject(page), annotations
-  }, args => result(() => catalog.listPlaylists(query(args)), s => pageText('playlists', s)));
+  }, args => result(() => {
+    const page = catalog.listPlaylists(query(args));
+    return { ...page, data: page.data.map(playlistSummary) };
+  }, s => pageText('playlists', s)));
   server.registerTool('get_playlist', {
-    description: 'Get a saved playlist by catalog ID with ordered members, settings and provenance. Reads only the catalog snapshot.',
+    description: 'Get normalized saved-playlist detail by catalog ID: counts, profile, ordered member positions/files/IDs/resolution, provenance and time. Raw copies, settings, presets and timing payloads are omitted in MCP v1.',
     inputSchema: idSchema, annotations
-  }, ({ id }) => result(() => catalog.getPlaylist(id), s => `Playlist returned; index revision ${s.indexRevision}.`));
+  }, ({ id }) => result(() => {
+    const item = catalog.getPlaylist(id);
+    return { ...item, data: playlistDetail(item.data) };
+  }, s => `Playlist returned; index revision ${s.indexRevision}.`));
   server.registerTool('get_preview', {
     description: 'Get the registered preview path and project path for a catalog wallpaper ID. Returns path metadata only; does not open, validate, or serve any file or image.',
     inputSchema: idSchema, annotations

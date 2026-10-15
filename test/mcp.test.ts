@@ -56,10 +56,41 @@ function assertError(value: CallToolResult, code: string) {
   assert.equal(value.isError, true);
   assert.equal(structured(value).error.code, code);
   assert.equal(value.content[0]?.type, 'text');
+  assertTextFallback(value);
+}
+function assertTextFallback(value: CallToolResult) {
+  const json = value.content[1];
+  assert.equal(json?.type, 'text');
+  assert.deepEqual(JSON.parse((json as { text: string }).text), value.structuredContent);
+}
+/** Independent public-field contract checks against the domain, not production mappers. */
+function assertCatalogView(response: CallToolResult, domain: Record<string, any>, tool: string) {
+  const actual = structured(response);
+  const { data, ...envelope } = actual;
+  const { data: original, ...domainEnvelope } = domain;
+  assert.deepEqual(envelope, domainEnvelope);
+  const pick = (row: Record<string, any>, keys: string[]) => Object.fromEntries(keys.filter(k => k in row).map(k => [k, row[k]]));
+  const wallpaperKeys = ['id', 'title', 'type', 'tags', 'availability', 'workshopId'];
+  const expectedWallpaper = (row: Record<string, any>, detail: boolean) => ({
+    ...pick(row, detail ? [...wallpaperKeys, 'projectPath', 'playableTarget', 'preview', 'provenance', 'observedAt'] : wallpaperKeys),
+    hasPreview: row.preview !== null
+  });
+  const expectedPlaylist = (row: Record<string, any>, detail: boolean) => ({
+    ...pick(row, detail ? ['id', 'name', 'profile', 'provenance', 'observedAt'] : ['id', 'name']),
+    memberCount: row.items.length,
+    unresolvedCount: row.items.filter((item: Record<string, any>) => item.resolution === 'unresolved').length,
+    ...(detail ? { items: row.items.map((item: Record<string, any>) => pick(item, ['position', 'file', 'wallpaperId', 'resolution'])) } : {})
+  });
+  if (tool === 'list_wallpapers') assert.deepEqual(data, original.map((w: Record<string, any>) => expectedWallpaper(w, false)));
+  else if (tool === 'get_wallpaper') assert.deepEqual(data, expectedWallpaper(original, true));
+  else if (tool === 'list_playlists') assert.deepEqual(data, original.map((p: Record<string, any>) => expectedPlaylist(p, false)));
+  else if (tool === 'get_playlist') assert.deepEqual(data, expectedPlaylist(original, true));
+  else assert.deepEqual(data, original);
+  assertTextFallback(response);
 }
 
 for (const modern of [false, true]) {
-  test(`SDK ${modern ? 'modern discovery' : 'legacy initialize'}/list/call matches direct domain results`, async t => {
+  test(`SDK ${modern ? 'modern discovery' : 'legacy initialize'}/list/call preserves projected domain fields and JSON text fallback`, async t => {
     const catalog = memoryCatalog();
     const session = await inMemory(catalog, modern);
     t.after(session.close);
@@ -86,11 +117,48 @@ for (const modern of [false, true]) {
     for (const example of cases) {
       const response = await client.callTool({ name: example.name, arguments: example.args });
       assert.notEqual(response.isError, true);
-      assert.deepEqual(response.structuredContent, example.expected);
+      assertCatalogView(response, example.expected, example.name);
       assert.equal(response.content[0]?.type, 'text');
     }
   });
 }
+
+test('MCP projections exclude large preserved source payloads while the catalog retains them', async t => {
+  const catalog = memoryCatalog();
+  const session = await inMemory(catalog);
+  t.after(session.close);
+  const calls = [
+    { name: 'list_wallpapers', arguments: {} }, { name: 'get_wallpaper', arguments: { id: 'wp_a' } },
+    { name: 'list_playlists', arguments: {} }, { name: 'get_playlist', arguments: { id: 'pl_a' } }
+  ];
+  const baseline = await Promise.all(calls.map(call => session.client.callTool(call)));
+  const large = snapshot();
+  const payload = 'PRESERVED_SOURCE_SENTINEL'.repeat(24_000);
+  large.wallpapers[1]!.workshopId = '123456789';
+  large.wallpapers[1]!.metadata = { project: { userproperties: { oversized: payload } }, cache: [{ oversized: payload }] };
+  const playlist = large.playlists[0]!;
+  playlist.raw = { oversized: payload, items: [{ oversized: payload }] };
+  playlist.settings = { oversized: payload };
+  playlist.items[0]!.raw = { oversized: payload };
+  playlist.items[0]!.preset = { oversized: payload };
+  playlist.items[0]!.daytimeend = { oversized: payload };
+  catalog.commit(large);
+  const direct = [catalog.listWallpapers(), catalog.getWallpaper('wp_a'), catalog.listPlaylists(), catalog.getPlaylist('pl_a')];
+  for (const [index, call] of calls.entries()) {
+    const response = await session.client.callTool(call);
+    assertCatalogView(response, direct[index]!, call.name);
+    const serialized = JSON.stringify(response);
+    assert.ok(!serialized.includes('PRESERVED_SOURCE_SENTINEL'));
+    assert.ok(serialized.length < JSON.stringify(baseline[index]).length + 256, 'Preserved source size must not grow the projected reply');
+  }
+  const summaries = structured(await session.client.callTool({ name: 'list_wallpapers' })).data;
+  assert.deepEqual(summaries.map((w: Record<string, any>) => [w.id, w.hasPreview, w.workshopId]), [['wp_a', true, '123456789'], ['wp_b', false, undefined]]);
+  const summary = structured(await session.client.callTool({ name: 'list_playlists' })).data[0];
+  assert.deepEqual(summary, { id: 'pl_a', name: 'Evening', memberCount: 2, unresolvedCount: 1 });
+  assert.deepEqual(catalog.getWallpaper('wp_a').data.metadata, large.wallpapers[1]!.metadata);
+  assert.deepEqual(catalog.getPlaylist('pl_a').data.raw, playlist.raw);
+  assert.deepEqual(catalog.getPlaylist('pl_a').data.items[0]!.preset, { oversized: payload });
+});
 
 test('pagination is stable, detects new revisions, and rejects malformed input before the domain runs', async t => {
   const catalog = memoryCatalog();
@@ -157,9 +225,9 @@ test('built CLI serves real SQLite read-only over SDK stdio; sees rescans withou
       const reader = new SqliteCatalogRepository(db, true);
       try {
         const direct = new Catalog(reader);
-        assert.deepEqual((await session.client.callTool({ name: 'catalog_status' })).structuredContent, direct.status());
-        assert.deepEqual((await session.client.callTool({ name: 'list_wallpapers' })).structuredContent, direct.listWallpapers());
-        assert.deepEqual((await session.client.callTool({ name: 'get_playlist', arguments: { id: 'pl_a' } })).structuredContent, direct.getPlaylist('pl_a'));
+        assertCatalogView(await session.client.callTool({ name: 'catalog_status' }), direct.status(), 'catalog_status');
+        assertCatalogView(await session.client.callTool({ name: 'list_wallpapers' }), direct.listWallpapers(), 'list_wallpapers');
+        assertCatalogView(await session.client.callTool({ name: 'get_playlist', arguments: { id: 'pl_a' } }), direct.getPlaylist('pl_a'), 'get_playlist');
       } finally { reader.close(); }
       assert.equal((await session.client.callTool({ name: 'list_wallpapers', arguments: { limit: -1 } })).isError, true);
       assert.match(session.stderr(), /ExperimentalWarning: SQLite/);
