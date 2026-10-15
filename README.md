@@ -35,6 +35,8 @@ Checks: `npm test` runs all backend test groups plus gallery HTTP tests, UI type
 
 The read-only local catalog is available through a CLI and a [local stdio MCP server](docs/local-mcp.md). An explicit CLI scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands and MCP tools use the snapshot without rescanning. The MCP interface exposes only catalog reads.
 
+An [authenticated Streamable HTTP MCP listener](docs/http-mcp.md) serves the same six tools with local bearer authentication or external-issuer OAuth validation. Run `npm run mcp:http` after configuring its required authentication environment. It always binds loopback; hosted chat integration still requires reviewed public HTTPS routing, an external issuer, and product-specific testing.
+
 An independent [Steam Workshop provider](docs/workshop.md) adds anonymous public
 item metadata and optional personal-key search for future interfaces. Search
 without a key returns a Steam handoff link and `credentials_required`.
