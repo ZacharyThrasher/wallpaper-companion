@@ -169,7 +169,7 @@ the cache or disable it. Returned objects are copies and cannot mutate the cache
   consume this interface. Subscription/download and credential setup remain
   separate product work; no compatibility guarantees are implied.
 
-CEO brief: The backend can retrieve public Wallpaper Engine item metadata now and
+Brief: The backend can retrieve public Wallpaper Engine item metadata now and
 is prepared for official keyed search. It adds no installation/configuration side
 effects. Local checks and all four CI jobs pass; a personal-key search test and
 coordinator review are the remaining gates.
