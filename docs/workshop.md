@@ -159,9 +159,11 @@ the cache or disable it. Returned objects are copies and cannot mutate the cache
   metadata, partial/duplicate batches, input limits, safe previews, TTL/eviction,
   exclusion changes on cached pages, bounded retry/cooldown, cancellation,
   serialization, and network/body/cancel timeouts.
-- CI limitation reported by the coordinator: GitHub Actions cannot start because
-  the account's Actions budget is exhausted. No retries, bypass, or billing
-  changes were attempted. Local checks are the available verification evidence.
+- [Fresh CI run 38680320366](https://github.com/ZacharyThrasher/wallpaper-companion/actions/runs/38680320366)
+  passed all four Windows/Ubuntu and Node 24.11.1/24.x jobs for implementation
+  commit `5535599`. The earlier Actions budget failure is historical: the user
+  authorized making the repository public, and standard runners now execute.
+  No billing changes were made.
 - Next: coordinator reviews this draft, then performs a credentialed official
   search smoke test when a personal key is available. Future GUI/MCP adapters can
   consume this interface. Subscription/download and credential setup remain
@@ -169,5 +171,5 @@ the cache or disable it. Returned objects are copies and cannot mutate the cache
 
 CEO brief: The backend can retrieve public Wallpaper Engine item metadata now and
 is prepared for official keyed search. It adds no installation/configuration side
-effects. Local checks pass; a personal-key search test and coordinator review are
-the remaining gates. CI availability depends on the existing Actions budget.
+effects. Local checks and all four CI jobs pass; a personal-key search test and
+coordinator review are the remaining gates.
