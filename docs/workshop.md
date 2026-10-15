@@ -1,9 +1,9 @@
 # Steam Workshop metadata provider
 
-`src/workshop/index.ts` exports an independent backend contract for future gallery,
-MCP, and CLI adapters. It does not depend on catalog internals or change companion,
-Steam, or Wallpaper Engine configuration. No UI, MCP tool, automatic subscription,
-wallpaper download, or preview download is included.
+`src/workshop/index.ts` exports the independent metadata provider used by the
+[guided gallery and opt-in stdio MCP workflow](discovery.md). The provider itself
+does not depend on catalog internals or change Steam/Wallpaper Engine configuration.
+It never subscribes, downloads wallpapers, or fetches preview images.
 
 ## Use
 
@@ -164,12 +164,12 @@ the cache or disable it. Returned objects are copies and cannot mutate the cache
   commit `5535599`. The earlier Actions budget failure is historical: the user
   authorized making the repository public, and standard runners now execute.
   No billing changes were made.
-- Next: coordinator reviews this draft, then performs a credentialed official
-  search smoke test when a personal key is available. Future GUI/MCP adapters can
-  consume this interface. Subscription/download and credential setup remain
-  separate product work; no compatibility guarantees are implied.
+- The guided gallery and opt-in stdio MCP now consume this interface; their
+  synthetic integration checks are documented in [the workflow handoff](workflow-handoff.md).
+  A credentialed official search smoke test still needs a personal key.
+  Subscription/download and credential setup UI remain separate product work.
 
 Brief: The backend can retrieve public Wallpaper Engine item metadata now and
-is prepared for official keyed search. It adds no installation/configuration side
-effects. Local checks and all four CI jobs pass; a personal-key search test and
-coordinator review are the remaining gates.
+is prepared for official keyed search. Integrated gallery/MCP discovery uses the
+same contract without installation/configuration side effects. The provider-level
+checks above record the original validation; a live personal-key search remains unverified.
