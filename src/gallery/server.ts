@@ -196,6 +196,12 @@ async function body(request: IncomingMessage): Promise<unknown> {
 /** The caller must listen on 127.0.0.1. No CORS or remote-origin access is provided. */
 export function createGalleryServer(options: GalleryOptions) {
   const csrf = randomBytes(32).toString('hex');
+  let playbackBusy = false;
+  async function playbackAction<T>(action: () => Promise<T>) {
+    if (playbackBusy) throw new WorkflowError('PLAYBACK_BUSY', 'Another playback action is running. Read current state before retrying.');
+    playbackBusy = true;
+    try { return await action(); } finally { playbackBusy = false; }
+  }
   return http.createServer(
     async (request: IncomingMessage, response: ServerResponse) => {
       response.setHeader("Cache-Control", "no-store");
@@ -247,8 +253,8 @@ export function createGalleryServer(options: GalleryOptions) {
           if (url.pathname === '/api/preferences') result = companion.workflow.save(input);
           else if (url.pathname === '/api/discover') result = await companion.workflow.discover(input);
           else if (url.pathname === '/api/inspect') result = await companion.workflow.inspect(input);
-          else if (url.pathname === '/api/apply') result = await companion.playback.applyWallpaper(applySchema.parse(input));
-          else if (url.pathname === '/api/play-playlist') result = await companion.playback.activatePlaylist(playSchema.parse(input));
+          else if (url.pathname === '/api/apply') { const args = applySchema.parse(input); result = await playbackAction(() => companion.playback.applyWallpaper(args)); }
+          else if (url.pathname === '/api/play-playlist') { const args = playSchema.parse(input); result = await playbackAction(() => companion.playback.activatePlaylist(args)); }
           else if (url.pathname === '/api/refresh') { z.strictObject({}).parse(input); result = await companion.refreshLibrary(); }
           else { failure(response, 404, 'NOT_FOUND', 'Unknown action.'); return; }
           response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -259,11 +265,15 @@ export function createGalleryServer(options: GalleryOptions) {
           let result: unknown;
           if (url.pathname === '/api/session' && options.companion && !url.search) result = { csrf };
           else if (['/api/discovery-context', '/api/shortlist'].includes(url.pathname) && options.companion) {
-            if ([...url.searchParams.keys()].join(',') !== 'reference') throw new WorkflowError('INVALID_ARGUMENT', 'Provide one reference.');
+            const params = [...url.searchParams.keys()];
+            if (url.searchParams.getAll('reference').length !== 1 || url.searchParams.getAll('offset').length > 1 || params.some(p => p !== 'reference' && !(url.pathname === '/api/shortlist' && p === 'offset')))
+              throw new WorkflowError('INVALID_ARGUMENT', 'Provide one reference and optional shortlist offset.');
             const reference = url.searchParams.get('reference')!;
-            result = url.pathname === '/api/shortlist' ? await options.companion.workflow.shortlist(reference) : options.companion.workflow.context(reference);
+            const offset = url.searchParams.get('offset') ?? '0';
+            if (!/^\d{1,4}$/.test(offset)) throw new WorkflowError('INVALID_ARGUMENT', 'Invalid shortlist offset.');
+            result = url.pathname === '/api/shortlist' ? await options.companion.workflow.shortlist(reference, Number(offset)) : options.companion.workflow.context(reference);
           }
-          else if (url.pathname === '/api/current' && options.companion && !url.search) result = await options.companion.playback.readCurrent({ monitor: 0 });
+          else if (url.pathname === '/api/current' && options.companion && !url.search) result = await playbackAction(() => options.companion!.playback.readCurrent({ monitor: 0 }));
           else if (url.pathname === "/api/status")
             result = {
               ...catalog.status(),

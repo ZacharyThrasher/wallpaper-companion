@@ -8,27 +8,31 @@ web
 
 ## Stack
 
-Delegated by the user through the coordinator: TypeScript, Node 24, SQLite catalog, React and Vite. A single loopback process serves the built gallery and catalog API. Code-first execution was explicitly selected for this feature.
+TypeScript, Node 24, built-in SQLite, React and Vite. A loopback process serves the gallery and API. CLI and MCP adapters use shared backend services. The interface extends the existing code and design system.
 
 ## Users
 
-A Windows Wallpaper Engine user exploring installed wallpapers and existing saved playlists. The user requests focused, scannable interactions with progressive disclosure for ADHD-friendly use.
+People using Wallpaper Engine on Windows who want to find wallpapers from existing playlists and explicit guidance. Focused, scannable workflows and progressive disclosure keep the task manageable.
 
 ## Product Purpose
 
-Make the existing local wallpaper library visible and understandable. The shared catalog also supports CLI and MCP consumers; gallery behavior follows that catalog's actual contents.
+Discover suitable wallpapers from saved playlist references and explicit preferences, inspect installed imagery, and explicitly control validated local playback. One backend makes catalog evidence and companion preferences available to the gallery and AI hosts.
 
 ## Operating Context
 
-An explicit CLI scan creates a companion-owned snapshot. The gallery reads that snapshot and registered local preview images. The index timestamp and unavailable entries must remain visible. Reload view reloads the snapshot; it does not scan or mutate Wallpaper Engine.
+An explicit CLI scan or configured Refresh library action creates a companion-owned snapshot. Gallery and MCP read it without scanning automatically. Reload view only reloads the snapshot. A separate versioned preferences database shares per-reference guidance, exclusions, dismissed IDs and shortlists across processes, with optimistic revision conflicts. Index timestamps and unavailable entries stay visible.
 
 ## Capabilities and Constraints
 
-This feature covers library filters, saved playlist selection, ordered membership including unresolved entries, image previews, and diagnostics. No wallpaper application controls, playlist editing, inferred taste profile, remote authentication, Workshop search, or startup changes are authorized here. Personal media and real playlist contents never enter Git.
+Library filters, saved playlist order including unresolved entries, registered image previews, diagnostics, playlist-guided discovery, anonymous Workshop inspection, companion shortlists and explicit playback are supported. Search needs an optional environment-only Steam key for API candidates; without it, a public Steam search handoff remains useful. Suggestions and explanations use deterministic title/tag evidence, never claim image or semantic analysis. AI hosts interpret richer guidance and can read bounded registered preview images through opt-in stdio tools.
+
+Apply wallpaper and Play playlist validate catalog IDs and default to monitor 0. Acceptance and target observation remain distinct. Refresh requires trusted startup scan settings or explicit default-source selection. Existing read-only MCP tools stay read-only; companion actions are opt-in. The separate HTTP MCP bridge currently exposes only catalog reads.
+
+Native playlist creation/editing, automatic subscription/download, paid model APIs, remote playback activation and startup changes are deferred. Companion shortlists are separate from native playlists. Steam links never establish subscription/installation. Personal media, preferences, credentials and real playlist contents never enter Git.
 
 ## Brand Commitments
 
-No emojis. The coordinator approved a quiet charcoal workspace, imagery as the main content, playlist rail, focused optional details, one restrained accent, and generous but useful density. No decorative gradients or nested cards.
+No emojis. A quiet charcoal workspace, imagery as the main content, playlist rail, focused optional details, one restrained accent, and generous but useful density. No decorative gradients or nested cards.
 
 ## Accessibility & Inclusion
 

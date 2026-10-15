@@ -8,13 +8,14 @@ import { createCatalogMcpServer } from './mcp/server.js';
 import { createCompanionRuntime } from './workflow/runtime.js';
 import { createCompanionMcpServer } from './mcp/companion.js';
 
-const help = `Wallpaper Companion local MCP server (stdio, read-only)
+const help = `Wallpaper Companion local MCP server (stdio, read-only by default)
 Usage: node <absolute-path>/dist/src/mcp-cli.js [--db <absolute-index-path>]
 Options: --db <file> --companion --preferences <file> --help
 --companion opts into guided discovery, preference writes and explicit playback tools.
 --preferences selects a separate companion preference store (only with --companion).
 The default index is the catalog CLI's per-user WallpaperCompanion/catalog.sqlite.
-Build and scan with the catalog CLI first. This server cannot scan or write.
+Build and scan with the catalog CLI first. This server cannot scan.
+Default mode cannot write; --companion explicitly enables preference writes and playback actions.
 Node 24.11.1+ (24.x) required; node:sqlite is experimental.
 stdout is reserved for MCP protocol traffic; all diagnostics use stderr.`;
 

@@ -86,7 +86,7 @@ textarea { caret-color: var(--accent); resize: vertical; width: 100%; font: inhe
 .discovery .error-state { margin-top: 24px; }
 .discovery-grid { margin-top: 24px; }
 .candidate { min-width: 0; }
-.candidate h3 { margin: 12px 0 6px; font-size: 0.95rem; font-weight: 500; overflow-wrap: anywhere; }
+.candidate h3 { margin: 12px 0 6px; font-size: 0.875rem; font-weight: 500; overflow-wrap: anywhere; }
 .match-reason { font-size: 0.8rem; color: var(--muted); }
 .candidate .action-row { gap: 8px; font-size: 0.8rem; }
 .candidate a { color: var(--accent); min-height: 32px; display: inline-flex; align-items: center; }

@@ -30,8 +30,9 @@ function DiscoveryProfile({ reference }: { reference: string }) {
   const [tags, setTags] = useState('');
   const [exclusions, setExclusions] = useState('');
   const [results, setResults] = useState<Discovery>();
+  const [submitted, setSubmitted] = useState<{ query: string; tags: string[] }>();
   const [inspected, setInspected] = useState<Candidate>();
-  const [shortlist, setShortlist] = useState<WorkshopDetail[]>();
+  const [shortlist, setShortlist] = useState<{ details: WorkshopDetail[]; pagination: { offset: number; total: number; nextOffset: number | null } }>();
   const [item, setItem] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +41,7 @@ function DiscoveryProfile({ reference }: { reference: string }) {
   useEffect(() => {
     const controller = new AbortController();
     request<Context>(`/api/discovery-context?reference=${encodeURIComponent(reference)}`, controller.signal).then(value => {
-      setContext(value); setDraft(value.preferences); setQuery(value.preferences.query || value.suggestions.query);
+      setContext(value); setDraft(value.preferences); setQuery(value.revision ? value.preferences.query : value.suggestions.query);
       setTags((value.revision ? value.preferences.tags : value.suggestions.tags).join(', ')); setExclusions(value.preferences.exclusions.join(', '));
     }).catch(error => { if (!controller.signal.aborted) setError(message(error)); });
     return () => controller.abort();
@@ -63,6 +64,10 @@ function DiscoveryProfile({ reference }: { reference: string }) {
     if (kind === 'dismissed') { setResults(current => current && ({ ...current, candidates: current.candidates.filter(c => c.id !== id) })); setInspected(undefined); }
     setNotice(kind === 'shortlist' ? included ? 'Removed from companion shortlist.' : 'Saved to companion shortlist.' : 'Dismissed for this reference.');
   }
+  async function loadShortlist(offset = 0) {
+    const value = await request<Awaited<ReturnType<WorkflowService['shortlist']>>>('/api/shortlist?reference=' + encodeURIComponent(reference) + '&offset=' + offset, new AbortController().signal);
+    setShortlist(value);
+  }
   if (!context || !draft) return <section aria-busy={!error}>
     {error ? <div role="alert" className="error-state"><p>{error}</p><button onClick={() => { setError(''); setReload(n => n + 1); }}>Reload preferences</button></div> : <p role="status">Loading discovery preferences…</p>}
   </section>;
@@ -70,21 +75,21 @@ function DiscoveryProfile({ reference }: { reference: string }) {
   return <div className="discovery">
     <form className="discovery-form" onSubmit={e => { e.preventDefault(); void execute(async () => {
       await save(); const value = await action<Discovery>('/api/discover', { reference, query, tags: split(tags) });
-      setResults(value); setInspected(undefined); setNotice(value.status === 'ok' ? `${value.candidates.length} new candidates returned.` : 'API search needs Steam credentials. Open the search in Steam or inspect a pasted item below.');
+      setSubmitted({ query, tags: split(tags) }); setResults(value); setInspected(undefined); setNotice(value.status === 'ok' ? `${value.candidates.length} new candidates returned.` : 'API search needs Steam credentials. Open the search in Steam or inspect a pasted item below.');
     }); }}>
       <label>What are you looking for?
-        <textarea maxLength={2000} rows={3} value={draft.guidance} onChange={e => setDraft({ ...draft, guidance: e.target.value })} placeholder="For example: quieter scenes for evening, with very little movement" />
+        <textarea disabled={busy} maxLength={2000} rows={3} value={draft.guidance} onChange={e => setDraft({ ...draft, guidance: e.target.value })} placeholder="For example: quieter scenes for evening, with very little movement" />
       </label>
       <p className="field-note">Saved guidance is shared with your AI chat. This app uses the query and tags below; it does not interpret your prose or analyze images.</p>
       <details className="evidence"><summary>What informed these suggestions?</summary>
         <p>{reference === 'global' ? 'No reference playlist selected.' : `${context.evidence.resolvedMembers} indexed playlist wallpapers; ${context.evidence.unresolvedMembers} unresolved entries.`} Suggestions count words in titles and existing tags.</p>
         <p>Frequent tags: {context.evidence.tags.map(t => `${t.value} (${t.count})`).join(', ') || 'none'}. Title words: {context.evidence.titleWords.map(t => t.value).join(', ') || 'none'}.</p>
-        <button type="button" className="text-button" onClick={() => { setQuery(context.suggestions.query); setTags(context.suggestions.tags.join(', ')); }}>Use reference suggestions</button>
+        <button disabled={busy} type="button" className="text-button" onClick={() => { setQuery(context.suggestions.query); setTags(context.suggestions.tags.join(', ')); }}>Use reference suggestions</button>
       </details>
       <div className="discovery-fields">
-        <label>Search query<input maxLength={512} value={query} onChange={e => setQuery(e.target.value)} /></label>
-        <label>Required tags <span className="muted">(comma separated)</span><input maxLength={2579} value={tags} onChange={e => setTags(e.target.value)} /></label>
-        <label>Exclude words or tags <span className="muted">(comma separated)</span><input maxLength={2579} value={exclusions} onChange={e => setExclusions(e.target.value)} /></label>
+        <label>Search query<input disabled={busy} maxLength={512} value={query} onChange={e => setQuery(e.target.value)} /></label>
+        <label>Required tags <span className="muted">(comma separated)</span><input disabled={busy} maxLength={2579} value={tags} onChange={e => setTags(e.target.value)} /></label>
+        <label>Exclude words or tags <span className="muted">(comma separated)</span><input disabled={busy} maxLength={2579} value={exclusions} onChange={e => setExclusions(e.target.value)} /></label>
       </div>
       <div className="action-row"><button disabled={busy} type="submit">{busy ? 'Working…' : 'Find wallpapers'}</button>
         <button disabled={busy} type="button" onClick={() => void execute(async () => { await save(); setNotice('Preferences saved for this reference.'); })}>Save guidance</button>
@@ -94,11 +99,12 @@ function DiscoveryProfile({ reference }: { reference: string }) {
     {notice && <p role="status" className="workflow-notice">{notice}</p>}
     {results && <section className="discovery-results">
       <h2>{results.status === 'credentials_required' ? 'Continue your search in Steam' : 'Workshop candidates'}</h2>
-      <p className="muted">{results.status === 'credentials_required' ? 'API search requires STEAM_WEB_API_KEY in the server environment. No key is stored here. Anonymous item inspection works below.' : 'Installed and dismissed items are excluded. Matches use title words and tags only.'}</p>
+      <p className="muted">{results.status === 'credentials_required' ? 'Open the prepared Steam search to browse wallpapers. Anonymous item inspection works below.' : 'Installed and dismissed items are excluded. Matches use title words and tags only.'}</p>
       <a className="steam-link" href={results.searchUrl} target="_blank" rel="noreferrer">Open Steam search</a>
+      {results.status === 'credentials_required' && <details className="evidence"><summary>Enable search results here</summary><p>API search requires a personal Steam Web API key in the server’s STEAM_WEB_API_KEY environment variable. No key is stored in companion preferences. See the setup documentation.</p></details>}
       {results.status === 'ok' && !results.candidates.length && <p>No new matches on this page. Edit the query or continue in Steam.</p>}
-      {results.status === 'ok' && results.nextCursor && <button disabled={busy} onClick={() => void execute(async () => {
-        const value = await action<Discovery>('/api/discover', { reference, query, tags: split(tags), cursor: results.nextCursor }); setResults(value);
+      {results.status === 'ok' && results.nextCursor && <button disabled={busy || query !== submitted?.query || JSON.stringify(split(tags)) !== JSON.stringify(submitted?.tags)} onClick={() => void execute(async () => {
+        const value = await action<Discovery>('/api/discover', { reference, ...submitted, cursor: results.nextCursor }); setResults(value);
       })}>Next page</button>}
     </section>}
     <section className="inspect-workshop"><h2>Inspect a Workshop item</h2><p className="muted">Paste a public Steam Workshop item URL or positive ID. Metadata is available without a key.</p>
@@ -112,9 +118,11 @@ function DiscoveryProfile({ reference }: { reference: string }) {
       onShortlist={() => void execute(() => collect(candidate.id, 'shortlist'))} onDismiss={() => void execute(() => collect(candidate.id, 'dismissed'))} />)}</div>}
     <section className="shortlist-section"><h2>Companion shortlist <span className="muted">({draft.shortlist.length})</span></h2>
       <p className="muted">A collection for this reference. Subscribe or add to a Wallpaper Engine playlist in Steam / Wallpaper Engine, then Refresh library after download.</p>
-      <button disabled={busy} onClick={() => void execute(async () => { const value = await request<{ details: WorkshopDetail[] }>('/api/shortlist?reference=' + encodeURIComponent(reference), new AbortController().signal); setShortlist(value.details); })}>Show shortlist</button>
-      {shortlist && !shortlist.length && <p>No shortlisted items yet. Inspect an item or search Steam to start.</p>}
-      {shortlist && <div className="wallpaper-grid discovery-grid">{shortlist.map(detail => detail.status === 'available' ? <CandidateCard key={detail.id} candidate={detail.candidate} saved busy={busy} onShortlist={() => void execute(() => collect(detail.id, 'shortlist'))} /> : <article key={detail.id}><p>Item {detail.id}: {detail.reason}</p><a href={detail.steamUrl} target="_blank" rel="noreferrer">Open in Steam</a><button disabled={busy} onClick={() => void execute(() => collect(detail.id, 'shortlist'))}>Remove from shortlist</button></article>)}</div>}
+      <button disabled={busy} onClick={() => void execute(() => loadShortlist())}>Show shortlist</button>
+      {shortlist && !shortlist.details.length && <p>No shortlisted items on this page. Inspect an item or search Steam to start.</p>}
+      {shortlist && <><p className="field-note">Showing {shortlist.details.length ? shortlist.pagination.offset + 1 : 0}–{shortlist.pagination.offset + shortlist.details.length} of {shortlist.pagination.total} saved items.</p>
+        <div className="action-row">{shortlist.pagination.offset > 0 && <button disabled={busy} onClick={() => void execute(() => loadShortlist(Math.max(0, shortlist.pagination.offset - 50)))}>Previous shortlist page</button>}{shortlist.pagination.nextOffset !== null && <button disabled={busy} onClick={() => void execute(() => loadShortlist(shortlist.pagination.nextOffset!))}>Next shortlist page</button>}</div>
+        <div className="wallpaper-grid discovery-grid">{shortlist.details.map(detail => detail.status === 'available' ? <CandidateCard key={detail.id} candidate={detail.candidate} saved busy={busy} onShortlist={() => void execute(() => collect(detail.id, 'shortlist'))} /> : <article key={detail.id}><p>Item {detail.id}: {detail.reason}</p><a href={detail.steamUrl} target="_blank" rel="noreferrer">Open in Steam</a><button disabled={busy} onClick={() => void execute(() => collect(detail.id, 'shortlist'))}>Remove from shortlist</button></article>)}</div></>}
       {!!draft.dismissed.length && <details className="dismissed"><summary>{draft.dismissed.length} dismissed items</summary><p>{draft.dismissed.join(', ')}</p><button disabled={busy} onClick={() => void execute(async () => { await save({ ...draft, dismissed: [] }); setNotice('Dismissed items cleared for this reference.'); })}>Clear dismissed items</button></details>}
     </section>
   </div>;

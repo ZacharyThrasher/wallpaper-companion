@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { existsSync, mkdirSync } from 'node:fs';
+import { closeSync, mkdirSync, openSync } from 'node:fs';
 import path from 'node:path';
 import * as z from 'zod/v4';
 import { defaultDatabasePath } from '../adapters/database-path.js';
@@ -27,16 +27,21 @@ export function defaultPreferencesPath() { return path.join(path.dirname(default
 export class PreferenceStore {
   private db: DatabaseSync;
   constructor(filename: string = defaultPreferencesPath()) {
-    const existed = filename !== ':memory:' && existsSync(filename);
-    if (filename !== ':memory:') mkdirSync(path.dirname(filename), { recursive: true });
+    let created = filename === ':memory:';
+    if (filename !== ':memory:') {
+      mkdirSync(path.dirname(filename), { recursive: true });
+      try { const fd = openSync(filename, 'wx'); closeSync(fd); created = true; }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
+    }
     this.db = new DatabaseSync(filename);
     try {
       this.db.exec('PRAGMA busy_timeout = 5000; BEGIN IMMEDIATE');
       const app = this.db.prepare('PRAGMA application_id').get() as { application_id: number };
       const version = this.db.prepare('PRAGMA user_version').get() as { user_version: number };
-      if (existed && (app.application_id !== APP_ID || version.user_version !== 1))
-        throw new WorkflowError('PREFERENCES_SCHEMA', 'Preferences file is foreign or uses an unsupported version. Keep it and choose a companion-owned preferences file.');
-      if (!existed) this.db.exec(`CREATE TABLE preferences (reference TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL);
+      const owned = app.application_id === APP_ID && version.user_version === 1;
+      if (!owned && (!created || app.application_id !== 0 || version.user_version !== 0))
+        throw new WorkflowError('PREFERENCES_SCHEMA', 'Preferences file is uninitialized, foreign or uses an unsupported version. If another companion process is starting, retry after it is ready. Otherwise preserve the file and choose a companion-owned preferences file.');
+      if (!owned) this.db.exec(`CREATE TABLE preferences (reference TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL);
         PRAGMA application_id = ${APP_ID}; PRAGMA user_version = 1;`);
       this.db.prepare('SELECT reference, revision, payload FROM preferences LIMIT 0').all();
       this.db.exec('COMMIT');

@@ -37,19 +37,20 @@ export class WorkflowService {
     }
     return rows;
   }
-  context(reference: string) {
+  context(reference: string) { return this.buildContext(reference, this.wallpapers()); }
+  private buildContext(reference: string, wallpapers: Wallpaper[]) {
     const playlist = this.reference(reference);
     const record = this.preferences.read(reference);
     const ids = new Set(playlist?.items.map(i => i.wallpaperId).filter(Boolean));
-    const members = this.wallpapers().filter(w => ids.has(w.id));
+    const members = wallpapers.filter(w => ids.has(w.id));
     const rank = (values: string[]) => {
       const counts = new Map<string, number>();
       for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
       return [...counts].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)).slice(0, 8).map(([value, count]) => ({ value, count }));
     };
-    const tags = rank(members.flatMap(w => [...new Set(w.tags.map(fold))]));
-    const titleWords = rank(members.flatMap(w => [...new Set(words(w.title).filter(w => !stop.has(w)))]));
-    return { ...record, referenceName: playlist?.name ?? 'No playlist reference', capabilities: this.workshop.capabilities(),
+    const tags = rank(members.flatMap(w => [...new Set(w.tags.map(t => fold(t.slice(0, 128))))]));
+    const titleWords = rank(members.flatMap(w => [...new Set(words(w.title.slice(0, 2000)).filter(w => !stop.has(w) && w.length <= 80))]));
+    return { ...record, referenceName: playlist?.name.slice(0, 256) ?? 'No playlist reference', capabilities: this.workshop.capabilities(),
       evidence: { method: 'title-tag-heuristic' as const, analyzedImages: false, resolvedMembers: members.length,
         unresolvedMembers: playlist?.items.filter(i => !i.wallpaperId).length ?? 0, tags, titleWords },
       suggestions: { query: titleWords.slice(0, 3).map(t => t.value).join(' '), tags: tags.slice(0, 3).map(t => t.value) } };
@@ -58,8 +59,7 @@ export class WorkflowService {
     const args = preferenceWriteSchema.parse(input); this.reference(args.reference);
     return this.preferences.write(args);
   }
-  private decorate(candidate: WorkshopCandidate, reference: string, query: string, tags: string[]) {
-    const context = this.context(reference);
+  private decorate(candidate: WorkshopCandidate, context: ReturnType<WorkflowService['context']>, query: string, tags: string[]) {
     const haystack = fold(candidate.title + ' ' + candidate.tags.join(' '));
     const explicit = [...new Set([...words(query), ...tags])].filter(t => haystack.includes(fold(t))).slice(0, 8);
     const referenceTags = context.evidence.tags.filter(t => candidate.tags.some(tag => fold(tag) === t.value)).slice(0, 5).map(t => t.value);
@@ -68,9 +68,10 @@ export class WorkflowService {
       guidanceInterpreted: false }, installation: 'not-established' as const };
   }
   async discover(input: unknown) {
-    const args = discoverySchema.parse(input); this.reference(args.reference);
-    const prefs = this.preferences.read(args.reference).preferences;
-    const installedIds = new Set(this.wallpapers().flatMap(w => w.workshopId && validId(w.workshopId) ? [w.workshopId] : []));
+    const args = discoverySchema.parse(input);
+    const wallpapers = this.wallpapers(); const context = this.buildContext(args.reference, wallpapers);
+    const prefs = context.preferences;
+    const installedIds = new Set(wallpapers.flatMap(w => w.workshopId && validId(w.workshopId) ? [w.workshopId] : []));
     const result = await this.workshop.search({ text: args.query, requiredTags: args.tags,
       excludedTags: prefs.exclusions, installedIds, dismissedIds: new Set(prefs.dismissed), limit: 20,
       ...(args.cursor === undefined ? {} : { cursor: args.cursor }) });
@@ -79,25 +80,27 @@ export class WorkflowService {
       if (seen.has(c.id) || installedIds.has(c.id) || prefs.dismissed.includes(c.id) ||
         prefs.exclusions.some(e => fold(c.title).includes(fold(e)) || c.tags.some(t => fold(t).includes(fold(e))))) return false;
       seen.add(c.id); return true;
-    }).map(c => this.decorate(c, args.reference, args.query, args.tags)),
+    }).map(c => this.decorate(c, context, args.query, args.tags)),
     guidance: prefs.guidance, guidanceInterpreted: false, subscription: 'Use Steam to subscribe, then refresh the local library after download.' };
   }
   async inspect(input: unknown) {
-    const args = inspectSchema.parse(input); this.reference(args.reference);
+    const args = inspectSchema.parse(input); const wallpapers = this.wallpapers(); const context = this.buildContext(args.reference, wallpapers);
     const id = workshopItemId(args.item);
     const [detail] = await this.workshop.details([id]);
     if (!detail) throw new WorkflowError('WORKSHOP_UNAVAILABLE', 'Steam returned no item metadata.');
-    const prefs = this.preferences.read(args.reference).preferences;
-    return detail.status === 'available' ? { ...detail, candidate: this.decorate(detail.candidate, args.reference, prefs.query, prefs.tags),
-      installed: this.wallpapers().some(w => w.workshopId === id), dismissed: prefs.dismissed.includes(id) } : detail;
+    const prefs = context.preferences;
+    return detail.status === 'available' ? { ...detail, candidate: this.decorate(detail.candidate, context, prefs.query, prefs.tags),
+      installed: wallpapers.some(w => w.workshopId === id), dismissed: prefs.dismissed.includes(id) } : detail;
   }
-  async shortlist(reference: string) {
+  async shortlist(reference: string, offset = 0) {
     this.reference(reference);
+    z.number().int().min(0).max(1000).parse(offset);
     const record = this.preferences.read(reference);
     // Bound network/output; callers can inspect further saved IDs individually.
-    const ids = record.preferences.shortlist.slice(0, 50);
+    const ids = record.preferences.shortlist.slice(offset, offset + 50);
     const details = ids.length ? await this.workshop.details(ids) : [];
-    return { reference, revision: record.revision, ids: record.preferences.shortlist, details, truncated: record.preferences.shortlist.length > 50,
+    return { reference, revision: record.revision, ids: record.preferences.shortlist, details,
+      pagination: { offset, total: record.preferences.shortlist.length, nextOffset: offset + 50 < record.preferences.shortlist.length ? offset + 50 : null },
       collection: 'Companion shortlist; this does not create or edit a Wallpaper Engine playlist.' };
   }
 }
