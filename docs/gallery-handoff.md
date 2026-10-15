@@ -1,6 +1,6 @@
 # Local gallery handoff
 
-One feature, branch `feature/local-gallery`, based on merged catalog commit `8814e6e`, updated with `main` through `41fb3bd`. Draft PR targets `main`. Coordinator owns review, integration, and merge. No MCP or catalog internals changed. The main update added the Workshop provider and Brief terminology; overlapping README additions were preserved together, with no code or dependency conflict.
+One feature, branch `feature/local-gallery`, based on merged catalog commit `8814e6e`, updated with `main` through `2d19351`. Draft PR targets `main`. Coordinator owns review, integration, and merge. No MCP or catalog internals changed. The main updates added the Workshop provider, playback service, and Brief terminology; overlapping README additions were preserved together, with no code or dependency conflict. The gallery exposes no playback actions.
 
 ## Behavior and files
 
@@ -23,11 +23,11 @@ The gallery does not scan automatically, infer preferences, verify subscription 
 
 - Node 24.11.1, Windows, real built-in `node:sqlite`; experimental warning is expected.
 - HTTP tests: API parity, ordered playlist response, Host/Origin/Fetch Metadata denials, no CORS, read-only methods, ID-only previews, HEAD, traversal, symlink/junction escapes, changed root, missing files, SVG refusal, oversized previews, invalid filters/revisions, and static-resource boundaries.
-- Ten frontend tests: loading, missing index/setup command, read failure/retry, title and availability filtering/reset, saved order/duplicates/unresolved rows, empty playlists, focus/Enter/Escape/return focus, broken-image fallback, multi-page loads at a consistent revision, empty-catalog short-circuit, and revision failure.
+- Eleven frontend tests: loading, missing index/setup command, read failure/retry, title and availability filtering/reset, saved order/duplicates/unresolved rows, empty playlists, focus/Enter/Escape/return focus, broken-image fallback, multi-page loads at a consistent revision, empty-catalog short-circuit, revision failure, and removed/renamed playlist recovery on Reload view. A successful reload resets an orphan selection to All wallpapers in both navigation controls and closes prior details.
 - Existing 12 catalog test groups continue to pass. Root `npm test` includes all gallery checks and production UI build, so the existing CI definition will cover them when available.
 - Bounded Playwright review used installed Microsoft Edge, synthetic SQLite fixtures, 1440px desktop and 390px narrow screenshots of the library and selected playlist/details. Images decoded, no page errors, no horizontal overflow, detail focus confirmed. Captures were inspected locally and never uploaded or committed. The manual Impeccable detector ran once and returned no findings.
 - Independent Impeccable finish review returned `ship` with no material fixes across all four captures. The documented pinned direction superseded a concept roll; all requested interaction and responsive states were inspected against it.
-- Clean `npm ci --ignore-scripts`, root `npm test` (38 Node test groups after main's Workshop integration and 10 frontend tests, UI type check/build), and production dependency audit pass locally. The gallery adds eight Node test groups and ten frontend tests. No personal imagery, indexes, paths, or real playlist metadata is committed.
+- Clean `npm ci --ignore-scripts`, root `npm test` (53 Node test groups after main's Workshop/playback integration and 11 frontend tests, UI type check/build), and production dependency audit pass locally. The gallery adds eight Node test groups and eleven frontend tests. No personal imagery, indexes, paths, or real playlist metadata is committed.
 - A historical GitHub Actions budget block occurred while the repository was private. After the user's public-visibility decision, all four jobs passed in [gallery CI run 38680714554](https://github.com/ZacharyThrasher/wallpaper-companion/actions/runs/38680714554): Windows/Linux on Node 24.11.1 and current 24.x. Check the draft PR for the latest head's fresh matrix after main integration. No billing change or workaround was used by this feature.
 
 ## Remaining integration

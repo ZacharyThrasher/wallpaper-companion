@@ -563,9 +563,9 @@ export function App() {
                       : ""}
                   </summary>
                   <p>
-                    Snapshot revision {library.status.indexRevision}. Reload view
-                    reads the saved index; run a new CLI scan to discover source
-                    changes.
+                    Snapshot revision {library.status.indexRevision}. Reload
+                    view reads the saved index; run a new CLI scan to discover
+                    source changes.
                   </p>
                   <pre>
                     <code>{scanCommand}</code>
