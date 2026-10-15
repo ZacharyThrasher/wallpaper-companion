@@ -21,13 +21,13 @@ The service exposes:
 
 | Method | Request | Command scope | Evidence returned |
 | --- | --- | --- | --- |
-| `readCurrent` | Optional `monitor` | Primary monitor by default | Current catalog ID, unindexed, or none |
-| `applyWallpaper` | `wallpaperId`, optional `monitor` | First monitor by default | Accepted command, previous/current observations, bounded target verification |
-| `activatePlaylist` | `playlistId`, optional `monitor` | First monitor by default | Accepted command and previous observation; playlist verification unavailable |
+| `readCurrent` | Optional `monitor` | Explicit first monitor (0) by default | Current catalog ID, unindexed, or none |
+| `applyWallpaper` | `wallpaperId`, optional `monitor` | Explicit first monitor (0) by default | Accepted command, previous/current observations, bounded target verification |
+| `activatePlaylist` | `playlistId`, optional `monitor` | Explicit first monitor (0) by default | Accepted command and previous observation; playlist verification unavailable |
 | `nextWallpaper` | Optional `monitor` | All monitors by default | Accepted command and previous primary/specified-monitor observation |
 | `pause` / `play` | No fields | All wallpapers | Accepted command; playback state verification unavailable |
 
-Monitor values must be safe integers from 0 through 63. This conservative request bound does not enumerate or establish which displays exist. Pause and play reject a monitor field because the documented commands are global. Unknown fields, raw paths, executable overrides, and raw argument arrays are rejected. IDs must be opaque catalog IDs with the expected namespace, and must exist in the current catalog.
+Monitor values must be safe integers from 0 through 63. This conservative request bound does not enumerate or establish which displays exist. Read, apply, and playlist activation always send an explicit monitor, defaulting to 0, so pre-observation and verification address the same display. The CLI's omitted-monitor defaults differ: open commands use the first monitor while getWallpaper uses the primary monitor. Pause and play reject a monitor field because the documented commands are global. Unknown fields, raw paths, executable overrides, and raw argument arrays are rejected. IDs must be opaque catalog IDs with the expected namespace, and must exist in the current catalog.
 
 `PlaybackDependencies` is trusted application configuration, not a request schema. It accepts the existing catalog, optional discovery provider, process runner, and process inspector. The wait and username dependencies support deterministic synthetic tests. Never populate these dependencies from GUI/MCP request values. The default playlist profile must match the current OS username. A host using an explicit discovery provider is responsible for selecting the correct installation, as it is for catalog discovery.
 
@@ -55,7 +55,7 @@ Previous observations are retained in action results so a future host can offer 
 
 ## Validation and handoff
 
-- Local Windows Node v24.11.1: `npm ci --ignore-scripts`, `npm run check`, and `npm test` pass. The suite has 26 groups: 12 existing catalog and 14 playback groups. Playback uses synthetic files and injected command/process inspection responses. Tests cover malicious arguments/IDs, monitor boundaries, missing/stale/escaped paths, installation/process matching, immediate pre-command revalidation, literal argument transport, runner timeout/output/nonzero failures, output normalization, delayed/failed verification, already-current behavior, playlist ambiguity, unchanged fixture config, and serialized calls.
+- Local Windows Node v24.11.1: `npm ci --ignore-scripts`, `npm run check`, and `npm test` pass. The suite has 27 groups: 12 existing catalog and 15 playback groups. Playback uses synthetic files and injected command/process inspection responses. Tests cover malicious arguments/IDs, monitor boundaries and differing first/primary displays, missing/stale/escaped paths, installation/process matching, immediate pre-command revalidation, literal argument transport, runner timeout/output/nonzero failures, output normalization, delayed/failed verification, already-current behavior, playlist ambiguity, unchanged fixture config, and serialized calls.
 - The real `execFile` runner is tested only with Node subprocesses. No live Wallpaper Engine command, including apply, pause, play, or next, was run. No live wallpaper or configuration was changed. External GUI/MCP integration, real engine argument parsing and getWallpaper output, rendering success, multi-monitor behavior, other OS execution, and rollback remain unverified.
 - Earlier private-repository GitHub Actions runs were blocked by the account Actions budget. The coordinator subsequently made the repository public at the user's request to enable standard CI. Fresh branch/PR results are recorded in the PR; no billing or runner workarounds are part of this feature.
 - Owned changes: `src/playback/`, `test/playback.test.ts`, and this document. Based on merged catalog `origin/main` commit `8814e6e`. The feature branch is `feature/playback-controls`; the coordinator owns review and merge. Next: review the draft PR, then integrate the typed service into authorized GUI/MCP actions and select any controlled live verification separately.

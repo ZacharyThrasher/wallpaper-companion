@@ -104,6 +104,32 @@ test('invalid IDs, unknown fields, raw path injection, and invalid monitors fail
   assert.equal(f.calls.length, 0);
 });
 
+test('default read/apply/playlist share explicit first monitor when the primary monitor differs', async t => {
+  const f = await fixture(t);
+  let first = path.join(f.scene, 'scene.pkg');
+  const primary = f.videoRow.playableTarget!;
+  f.setHandler(async r => {
+    const monitorFlag = r.args.indexOf('-monitor');
+    const monitor = monitorFlag === -1 ? undefined : Number(r.args[monitorFlag + 1]);
+    if (r.args[1] === 'getWallpaper') return ok(monitor === 0 ? first : primary);
+    if (r.args[1] === 'openWallpaper') { assert.equal(monitor, 0); first = r.args[3]!; }
+    if (r.args[1] === 'openPlaylist') assert.equal(monitor, 0);
+    return ok();
+  });
+  const read = await f.service.readCurrent();
+  assert.equal(read.wallpaperId, f.sceneRow.id); assert.equal(read.monitor, 0);
+  const same = await f.service.applyWallpaper({ wallpaperId: f.sceneRow.id });
+  assert.equal(same.previous.wallpaperId, f.sceneRow.id); assert.equal(same.previous.monitor, 0);
+  assert.equal(same.verification, 'target-observed'); assert.equal(same.changeObserved, false); assert.equal(same.monitor, 0);
+  const changed = await f.service.applyWallpaper({ wallpaperId: f.videoRow.id });
+  assert.equal(changed.previous.wallpaperId, f.sceneRow.id); assert.equal(changed.verification, 'target-observed'); assert.equal(changed.changeObserved, true);
+  const playlist = await f.service.activatePlaylist({ playlistId: f.playlist.id });
+  assert.equal(playlist.monitor, 0); assert.equal(playlist.previous?.monitor, 0);
+  const global = await f.service.nextWallpaper();
+  assert.equal(global.monitor, null); assert.equal(global.previous?.monitor, null);
+  assert.deepEqual(f.calls.at(-1)?.args, ['-control', 'nextWallpaper']);
+});
+
 test('missing files, stale metadata, fabricated paths, and canonical escapes cannot launch', async t => {
   const f = await fixture(t);
   await fs.unlink(f.videoRow.playableTarget!);

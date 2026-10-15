@@ -119,11 +119,11 @@ export class PlaybackService {
     }
   }
   readCurrent(request: MonitorRequest = {}): Promise<CurrentWallpaper> {
-    return this.serial(async () => (await this.observe(await this.context(validate(request)))).public);
+    return this.serial(async () => (await this.observe(await this.context(validate(request) ?? 0))).public);
   }
   applyWallpaper(request: WallpaperRequest): Promise<WallpaperResult> {
     return this.serial(async () => {
-      const monitor = validate(request, 'wallpaperId');
+      const monitor = validate(request, 'wallpaperId') ?? 0;
       const w = this.catalog(() => this.deps.catalog.getWallpaper(request.wallpaperId).data);
       const ctx = await this.context(monitor);
       await wallpaperTarget(w, ctx.locations);
@@ -147,7 +147,7 @@ export class PlaybackService {
   }
   activatePlaylist(request: PlaylistRequest): Promise<AcceptedResult> {
     return this.serial(async () => {
-      const monitor = validate(request, 'playlistId');
+      const monitor = validate(request, 'playlistId') ?? 0;
       const p = this.catalog(() => this.deps.catalog.getPlaylist(request.playlistId).data);
       const ctx = await this.context(monitor);
       await playlistName(p, ctx.locations, this.deps.username);
