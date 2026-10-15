@@ -24,11 +24,12 @@ The single-row JSON snapshot keeps persistence and atomic replacement simple. It
 
 ## Verification and limitations
 
-- Local `npm run check` and `npm test` on Node v24.11.1; synthetic coverage includes packed Scenes, mixed playlists/presets, profile ambiguity, malformed sources, path/junction escapes, stable IDs/pagination, immutable input hashes, failed-scan preservation, and forced SQLite rollback.
+- Local `npm ci --ignore-scripts`, `npm run check`, and all 12 `npm test` groups pass on Node v24.11.1; synthetic coverage includes packed Scenes, mixed playlists/presets, profile ambiguity, malformed sources, path/junction escapes, stable IDs/pagination, immutable input hashes, failed-scan preservation, and forced SQLite rollback. Both coordinator review regressions have targeted tests.
 - Optional read-only live check: 44 accepted wallpaper projects (25 Scene, 17 Video, 2 Web), 2 saved playlists, all 21 saved members resolved, all 44 accepted wallpapers available. Workshop inventory from completed research was 28; this scan also includes bundled/local projects. Three project schema diagnostics and four absent optional project roots were reported. These are aggregate observations only.
 - SHA-256 input comparison confirmed all 49 inventoried metadata files unchanged. No titles, playlist contents, personal media paths, config files, or assets were committed. The optional live index and checker stay under ignored `.local/`.
-- Actual playback, wallpaper controls, external clients, MCP, gallery, remote access, subscriptions, and taste inference were not tested or implemented. SQLite is experimental. CI results must be checked separately from local results.
+- Actual playback, wallpaper controls, external clients, MCP, gallery, remote access, subscriptions, and taste inference were not tested or implemented. SQLite is experimental.
+- GitHub Actions did not start any test steps: the check annotation states, "The job was not started because an Actions budget is preventing further use." Remote validation is blocked by account infrastructure; this is not a remote test result. No retries, billing changes, or account-setting workarounds were attempted. The Windows/Linux and current-24.x matrix remains unverified remotely.
 
 Next: coordinator reviews the draft and selects integration order; subsequent feature chats should branch after the reviewed catalog API is accepted.
 
-CEO brief: The first shared backend and CLI are implemented and locally validated, including a read-only live check. The coordinator still owns review, merge, and subsequent interface work. Main limits are experimental SQLite, stale observations between scans, and in-memory snapshot scaling.
+CEO brief: The first shared backend and CLI are implemented and locally validated, including a read-only live check. The coordinator still owns review, merge, and subsequent interface work. Remote CI cannot run because of the Actions budget. Main implementation limits are experimental SQLite, stale observations between scans, and in-memory snapshot scaling.
