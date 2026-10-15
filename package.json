@@ -18,24 +18,29 @@
     "gallery:build": "npm run build && npm run check:ui && npm run build:ui",
     "gallery:demo": "node dist/src/gallery/demo.js",
     "test:ui": "vitest run --config ui/vite.config.ts",
-    "test:gallery": "npm run build && node --test dist/src/gallery/server.test.js && npm run test:ui"
+    "test:gallery": "npm run build && node --test dist/src/gallery/server.test.js && npm run test:ui",
+    "mcp": "node dist/src/mcp-cli.js",
+    "test:mcp": "npm run build && node --test dist/test/mcp*.test.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
-    "@types/node": "^24.10.0",
+    "@modelcontextprotocol/client": "2.3.1",
+    "@types/node": "24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "jsdom": "^29.1.1",
-    "typescript": "^5.9.3",
+    "typescript": "5.9.3",
     "vite": "^8.3.4",
     "vitest": "^5.0.4"
   },
   "dependencies": {
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "@modelcontextprotocol/server": "2.3.1",
+    "zod": "4.6.7"
   }
 }

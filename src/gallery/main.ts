@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { Catalog } from "../catalog.js";
 import { CatalogError, type CatalogRepository } from "../domain.js";
-import { defaultDatabasePath } from "../cli.js";
+import { defaultDatabasePath } from "../adapters/database-path.js";
 import { SqliteCatalogRepository } from "../adapters/sqlite.js";
 import { createGalleryServer } from "./server.js";
 

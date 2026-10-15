@@ -1,6 +1,6 @@
 # Local gallery handoff
 
-One feature, branch `feature/local-gallery`, based on merged catalog commit `8814e6e`, updated with `main` through `2d19351`. Draft PR targets `main`. Coordinator owns review, integration, and merge. No MCP or catalog internals changed. The main updates added the Workshop provider, playback service, and Brief terminology; overlapping README additions were preserved together, with no code or dependency conflict. The gallery exposes no playback actions.
+One feature, branch `feature/local-gallery`, based on merged catalog commit `8814e6e`, updated with `main` through `6cab9a3`. Draft PR targets `main`. Coordinator owns review, integration, and merge. No MCP or catalog implementation changes were authored by this feature. Main supplied Workshop, playback, MCP, and Brief terminology. The final coordinator-requested merge retained MCP's pinned SDK/Zod dependencies and scripts alongside all gallery dependencies/scripts, reconciled README content, and regenerated the lock with npm. The gallery uses the extracted shared database-path helper and exposes no playback actions.
 
 ## Behavior and files
 
@@ -27,7 +27,7 @@ The gallery does not scan automatically, infer preferences, verify subscription 
 - Existing 12 catalog test groups continue to pass. Root `npm test` includes all gallery checks and production UI build, so the existing CI definition will cover them when available.
 - Bounded Playwright review used installed Microsoft Edge, synthetic SQLite fixtures, 1440px desktop and 390px narrow screenshots of the library and selected playlist/details. Images decoded, no page errors, no horizontal overflow, detail focus confirmed. Captures were inspected locally and never uploaded or committed. The manual Impeccable detector ran once and returned no findings.
 - Independent Impeccable finish review returned `ship` with no material fixes across all four captures. The documented pinned direction superseded a concept roll; all requested interaction and responsive states were inspected against it.
-- Clean `npm ci --ignore-scripts`, root `npm test` (53 Node test groups after main's Workshop/playback integration and 11 frontend tests, UI type check/build), and production dependency audit pass locally. The gallery adds eight Node test groups and eleven frontend tests. No personal imagery, indexes, paths, or real playlist metadata is committed.
+- Clean `npm ci --ignore-scripts` and root `npm test` pass after full integration: 61 Node test groups (catalog, MCP, Workshop, playback, gallery), 11 frontend tests, UI type check/build. Npm reports no vulnerabilities across the combined dependency tree. The gallery adds eight Node test groups and eleven frontend tests. No personal imagery, indexes, paths, or real playlist metadata is committed.
 - A historical GitHub Actions budget block occurred while the repository was private. After the user's public-visibility decision, all four jobs passed in [gallery CI run 38680714554](https://github.com/ZacharyThrasher/wallpaper-companion/actions/runs/38680714554): Windows/Linux on Node 24.11.1 and current 24.x. Check the draft PR for the latest head's fresh matrix after main integration. No billing change or workaround was used by this feature.
 
 ## Remaining integration

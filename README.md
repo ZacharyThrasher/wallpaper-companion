@@ -31,7 +31,9 @@ npm run gallery -- --db .local/gallery-demo/catalog.sqlite
 
 This creates only generated sample imagery and sample playlists under ignored `.local/gallery-demo/`. It uses the real SQLite adapter and HTTP server. Start it while the regular gallery is stopped, or choose another `--port`.
 
-Checks: `npm test` runs the catalog and gallery HTTP tests, UI type checks, frontend state/keyboard/pagination tests, and production UI build. `npm run test:gallery` runs only gallery-related tests. For optional local screenshot review, install Microsoft Edge and run `node ui/review-capture.mjs` while the synthetic gallery runs on port 4318. This writes ignored private captures; it is never part of `npm test` or CI. See [the gallery handoff](docs/gallery-handoff.md) for verification and limits.
+Checks: `npm test` runs all backend test groups plus gallery HTTP tests, UI type checks, frontend state/keyboard/pagination tests, and the production UI build. `npm run test:gallery` runs only gallery-related tests. For optional local screenshot review, install Microsoft Edge and run `node ui/review-capture.mjs` while the synthetic gallery runs on port 4318. This writes ignored private captures; it is never part of `npm test` or CI. See [the gallery handoff](docs/gallery-handoff.md) for verification and limits.
+
+The read-only local catalog is available through a CLI and a [local stdio MCP server](docs/local-mcp.md). An explicit CLI scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands and MCP tools use the snapshot without rescanning. The MCP interface exposes only catalog reads.
 
 An independent [Steam Workshop provider](docs/workshop.md) adds anonymous public
 item metadata and optional personal-key search for future interfaces. Search
@@ -39,7 +41,7 @@ without a key returns a Steam handoff link and `credentials_required`.
 Credentialed search is not yet live-verified; subscription/download and credential
 setup UI are outside this feature.
 
-The first feature is a read-only local catalog and CLI. An explicit scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands use the snapshot without rescanning. No wallpaper controls, installation, or source configuration writes are implemented.
+A separate [playback adapter](docs/playback.md) provides local playback controls.
 
 Requires Node **24.11.1 or newer in the 24.x line**. The built-in `node:sqlite` module is experimental and emits a warning to stderr; JSON output remains on stdout. The catalog needs no native SQLite addon.
 
@@ -103,6 +105,6 @@ Developer interfaces are stable for the first adapters:
 
 Preview-serving adapters call `Catalog.getPreview(wallpaperId)` and revalidate its registered project-relative path against disk before opening. The gallery implements this without an arbitrary-file serving endpoint. The catalog service has no filesystem dependencies. The SQLite adapter reads and filters a complete snapshot in memory; this is suitable for the current local library size but needs reconsideration for very large catalogs.
 
-Run `npm run check` and `npm test`. Tests use synthetic files with the built-in Node test runner and Vitest/Testing Library for the gallery. CI covers Windows and Linux, Node 24.11.1 and current 24.x. Node 24.11.1 was verified locally, including its experimental SQLite API. The local GUI is described above. No MCP, taste inference, remote bridge, wallpaper control, automatic subscription, or external-client compatibility is included in this feature.
+Run `npm run check` and `npm test`. The root test command runs all compiled `test/*.test.ts` groups (catalog, MCP, Workshop, playback), gallery HTTP tests, UI type checks, frontend state/keyboard tests, and the production UI build. Fixtures are synthetic. CI covers Windows and Linux, Node 24.11.1 and current 24.x; see PR checks for current results. Node 24.11.1 was verified locally, including its experimental SQLite API. `npm run test:mcp` runs the MCP protocol checks. See [local MCP setup](docs/local-mcp.md) for the six tools, strict argument limits, compact projections, structured results with JSON text fallback, and Codex/Claude Code/Claude Desktop/Gemini CLI configuration examples. Those named clients have not been tested. The gallery exposes no playback controls, taste inference, remote bridge, or automatic subscription.
 
-Brief: The CLI safely catalogs the local library and saved playlists; the gallery makes their imagery and order easy to inspect. Both preserve unresolved entries, and a failed scan keeps the previous index. Local browser access is restricted to the loopback origin, and source configuration stays untouched. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
+Brief: The CLI safely catalogs the local library and saved playlists; the gallery makes their imagery and order easy to inspect, and MCP lets AI clients query the same snapshot. Unresolved entries stay visible, and a failed scan keeps the previous index. Gallery browser access is restricted to loopback, and the gallery/MCP interfaces remain read-only. Named MCP client setup still needs validation. SQLite remains experimental; availability describes the scan time rather than guaranteeing playback.
