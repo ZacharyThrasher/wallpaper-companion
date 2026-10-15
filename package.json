@@ -10,19 +10,38 @@
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit",
-    "test": "npm run build && node --test dist/test/*.test.js",
+    "test": "npm run build && node --test dist/test/*.test.js dist/src/gallery/server.test.js && npm run check:ui && npm run test:ui && npm run build:ui",
     "start": "node dist/src/cli.js",
+    "build:ui": "vite build --config ui/vite.config.ts",
+    "check:ui": "tsc -p ui/tsconfig.json",
+    "gallery": "node dist/src/gallery/main.js",
+    "gallery:build": "npm run build && npm run check:ui && npm run build:ui",
+    "gallery:demo": "node dist/src/gallery/demo.js",
+    "test:ui": "vitest run --config ui/vite.config.ts",
+    "test:gallery": "npm run build && node --test dist/src/gallery/server.test.js && npm run test:ui",
     "mcp": "node dist/src/mcp-cli.js",
     "test:mcp": "npm run build && node --test dist/test/mcp*.test.js",
     "mcp:http": "node dist/src/mcp-http-cli.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@modelcontextprotocol/client": "2.3.1",
     "@types/node": "24.19.2",
-    "typescript": "5.9.3"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^29.1.1",
+    "typescript": "5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
   },
   "dependencies": {
     "@modelcontextprotocol/node": "2.1.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "@modelcontextprotocol/server": "2.3.1",
     "jose": "6.2.12",
     "zod": "4.6.7"
