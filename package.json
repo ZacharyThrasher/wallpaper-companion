@@ -20,7 +20,8 @@
     "test:ui": "vitest run --config ui/vite.config.ts",
     "test:gallery": "npm run build && node --test dist/src/gallery/server.test.js && npm run test:ui",
     "mcp": "node dist/src/mcp-cli.js",
-    "test:mcp": "npm run build && node --test dist/test/mcp*.test.js"
+    "test:mcp": "npm run build && node --test dist/test/mcp*.test.js",
+    "mcp:http": "node dist/src/mcp-http-cli.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
@@ -38,9 +39,11 @@
     "vitest": "^5.0.4"
   },
   "dependencies": {
+    "@modelcontextprotocol/node": "2.1.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "@modelcontextprotocol/server": "2.3.1",
+    "jose": "6.2.12",
     "zod": "4.6.7"
   }
 }
