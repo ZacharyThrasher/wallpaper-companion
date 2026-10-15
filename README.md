@@ -2,6 +2,12 @@
 
 A Windows companion for finding and organizing Wallpaper Engine wallpapers using your existing playlists and guidance.
 
+An independent [Steam Workshop provider](docs/workshop.md) adds anonymous public
+item metadata and optional personal-key search for future interfaces. Search
+without a key returns a Steam handoff link and `credentials_required`.
+Credentialed search is not yet live-verified; subscription/download and credential
+setup UI are outside this feature.
+
 The first feature is a read-only local catalog and CLI. An explicit scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands use the snapshot without rescanning. No wallpaper controls, installation, or source configuration writes are implemented.
 
 Requires Node **24.11.1 or newer in the 24.x line**. The built-in `node:sqlite` module is experimental and emits a warning to stderr; JSON output remains on stdout. No native compiled dependencies are installed.
