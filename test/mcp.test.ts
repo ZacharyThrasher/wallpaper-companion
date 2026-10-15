@@ -4,9 +4,9 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { Client, InMemoryTransport, type CallToolResult } from '@modelcontextprotocol/client';
-import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
+import { StdioClientTransport, getDefaultEnvironment } from '@modelcontextprotocol/client/stdio';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { Catalog } from '../src/catalog.js';
 import { SqliteCatalogRepository } from '../src/adapters/sqlite.js';
@@ -211,6 +211,12 @@ async function stdio(db: string, modern = false) {
 }
 
 test('built CLI serves real SQLite read-only over SDK stdio; sees rescans without restart and keeps diagnostics off stdout', async t => {
+  // The minimum runtime emits this warning; newer 24.x builds may not.
+  // Match the actual Node build rather than treating warning text as a protocol requirement.
+  const probe = spawnSync(process.execPath, ['--input-type=module', '-e', 'import "node:sqlite";'],
+    { encoding: 'utf8', windowsHide: true, env: getDefaultEnvironment() });
+  assert.equal(probe.status, 0);
+  const expectsWarning = /ExperimentalWarning: SQLite/.test(probe.stderr);
   const dir = await mkdtemp(path.join(os.tmpdir(), 'wallpaper-mcp-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const db = path.join(dir, 'catalog.sqlite');
@@ -230,9 +236,9 @@ test('built CLI serves real SQLite read-only over SDK stdio; sees rescans withou
         assertCatalogView(await session.client.callTool({ name: 'get_playlist', arguments: { id: 'pl_a' } }), direct.getPlaylist('pl_a'), 'get_playlist');
       } finally { reader.close(); }
       assert.equal((await session.client.callTool({ name: 'list_wallpapers', arguments: { limit: -1 } })).isError, true);
-      assert.match(session.stderr(), /ExperimentalWarning: SQLite/);
       assert.deepEqual(session.errors, []);
     } finally { await session.close(); }
+    assert.equal(/ExperimentalWarning: SQLite/.test(session.stderr()), expectsWarning);
     assert.deepEqual(await readFile(db), before);
     assert.deepEqual((await readdir(dir)).sort(), ['catalog.sqlite']);
   }
