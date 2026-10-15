@@ -1,6 +1,5 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import os from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { Catalog } from './catalog.js';
@@ -9,6 +8,8 @@ import { canonicalDestination, inside, missing } from './adapters/files.js';
 import { discover } from './adapters/steam.js';
 import { scan } from './adapters/scanner.js';
 import { SqliteCatalogRepository } from './adapters/sqlite.js';
+import { defaultDatabasePath } from './adapters/database-path.js';
+export { defaultDatabasePath } from './adapters/database-path.js';
 
 const help = `Wallpaper Companion: read-only library and saved playlist catalog
 Usage: node dist/src/cli.js <command> [id] [options]
@@ -20,9 +21,6 @@ Wallpapers: --type <type> --tag <tag> --availability <available|missing|unsuppor
 Only scan writes, and only to a companion-owned SQLite database.
 Node 24.11.1+ (24.x) required; node:sqlite is experimental.`;
 
-export function defaultDatabasePath() {
-  return path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), '.local', 'share'), 'WallpaperCompanion', 'catalog.sqlite');
-}
 function integer(value: string | undefined, name: string): number | undefined {
   if (value === undefined) return undefined;
   if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) throw new CatalogError('INVALID_ARGUMENT', `${name} must be a nonnegative integer.`);
