@@ -93,9 +93,10 @@ export async function run(argv: string[], write: (text: string) => void = text =
     }
     return 0;
   } catch (error) {
-    const code = error instanceof CatalogError ? error.code : 'OPERATION_FAILED';
+    const argumentError = error instanceof TypeError && 'code' in error && String(error.code).startsWith('ERR_PARSE_ARGS');
+    const code = error instanceof CatalogError ? error.code : argumentError ? 'INVALID_ARGUMENT' : 'OPERATION_FAILED';
     // Node filesystem errors often include personal source paths. Keep CLI failures concise.
-    const message = error instanceof CatalogError ? error.message : 'Operation failed. Check source access, input format, and database permissions.';
+    const message = error instanceof CatalogError || argumentError ? (error as Error).message : 'Operation failed. Check source access, input format, and database permissions.';
     const response = { schemaVersion, indexRevision: null, observedAt: null, diagnostics: [{ severity: 'error', code, message }], error: { code, message } };
     write(json ? `${JSON.stringify(response)}\n` : `${code}: ${message}\n`);
     return 1;

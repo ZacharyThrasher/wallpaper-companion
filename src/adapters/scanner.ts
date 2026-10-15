@@ -69,14 +69,16 @@ export async function scan(locations: SourceLocations, options: ScanOptions = {}
     }
   }
   for (const root of roots) {
+    let present = true;
     try {
-      // Root junctions are permitted as explicit source locations; descendants are not followed.
-      await walk(root.path, root.workshop, root.path);
+      await fs.stat(root.path);
     } catch (error) {
-      // Only a missing root is optional. A disappearing descendant is an incomplete scan.
-      if (missing(error) && !(await fs.stat(root.path).catch(e => { if (missing(e)) return null; throw e; }))) warn('PROJECT_ROOT_MISSING', 'Optional project root absent.', root.path);
+      if (missing(error)) { present = false; warn('PROJECT_ROOT_MISSING', 'Optional project root absent.', root.path); }
       else throw error;
     }
+    // Only an initially absent root is optional. Any disappearance during walk is fatal.
+    // Root junctions are permitted as explicit source locations; descendants are not followed.
+    if (present) await walk(root.path, root.workshop, root.path);
   }
   const wallpapers = new Map<string, Wallpaper>();
   const aliases = new Map<string, Set<string>>();
@@ -112,6 +114,7 @@ export async function scan(locations: SourceLocations, options: ScanOptions = {}
         if (await exists(candidate)) preview = candidate;
         else warn('PREVIEW_MISSING', 'Project preview is absent.', project.filename);
       }
+      else if (raw.preview !== undefined && typeof raw.preview !== 'string') warn('PREVIEW_SCHEMA', 'Ignored non-string project preview.', project.filename);
       target = type === 'scene' ? project.filename : file;
       if (!knownTypes.has(type)) { availability = 'unsupported'; target = null; warn('PROJECT_TYPE_UNKNOWN', 'Unknown project type; no playable target exposed.', project.filename); }
       else if (type === 'scene') {

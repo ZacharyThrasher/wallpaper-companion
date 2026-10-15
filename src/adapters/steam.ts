@@ -52,6 +52,12 @@ export function parseVdf(text: string): Vdf {
 }
 export interface SourceLocations { installDir: string; workshopDirs: string[]; protectedRoots: string[] }
 export interface DiscoveryOptions { steamPath?: string; installDir?: string; workshopDir?: string }
+function sourceLocations(installDir: string, workshopDirs: string[], libraries: string[] = []): SourceLocations {
+  // Effective roots can be junctions to directories outside the installation.
+  // Output guards canonicalize each root rather than protecting only the install ancestor.
+  return { installDir, workshopDirs, protectedRoots: [...libraries, installDir, ...workshopDirs,
+    path.join(installDir, 'projects', 'defaultprojects'), path.join(installDir, 'projects', 'myprojects')] };
+}
 async function registrySteamPath() {
   if (process.platform !== 'win32') throw new CatalogError('STEAM_NOT_FOUND', 'Use --steam-path or --install-dir outside Windows.');
   try {
@@ -64,8 +70,19 @@ async function registrySteamPath() {
 export async function discover(options: DiscoveryOptions): Promise<SourceLocations> {
   if (options.installDir && !options.steamPath) {
     const installDir = path.resolve(options.installDir);
-    const workshopDirs = options.workshopDir ? [path.resolve(options.workshopDir)] : [];
-    return { installDir, workshopDirs, protectedRoots: [installDir, ...workshopDirs] };
+    if (options.workshopDir) return sourceLocations(installDir, [path.resolve(options.workshopDir)]);
+    const common = path.dirname(installDir); const steamapps = path.dirname(common);
+    if (path.basename(common).toLowerCase() === 'common' && path.basename(steamapps).toLowerCase() === 'steamapps') {
+      return discover({ ...options, steamPath: path.dirname(steamapps) });
+    }
+    // Nonstandard install locations still use discovered Steam libraries when available.
+    let registered: string;
+    try { registered = await registrySteamPath(); }
+    catch (error) {
+      if (error instanceof CatalogError && error.code === 'STEAM_NOT_FOUND') return sourceLocations(installDir, []);
+      throw error;
+    }
+    return discover({ ...options, steamPath: registered });
   }
   const steamPath = path.resolve(options.steamPath ?? await registrySteamPath());
   const libraries = [steamPath];
@@ -93,5 +110,5 @@ export async function discover(options: DiscoveryOptions): Promise<SourceLocatio
   if (!options.installDir && installs.length !== 1) throw new CatalogError('INSTALL_AMBIGUOUS', 'Expected one Wallpaper Engine install; use --install-dir to select it.');
   const installDir = path.resolve(options.installDir ?? installs[0]!);
   const workshopDirs = options.workshopDir ? [path.resolve(options.workshopDir)] : libraries.map(p => path.join(p, 'steamapps', 'workshop', 'content', '431960'));
-  return { installDir, workshopDirs, protectedRoots: [...libraries, installDir, ...workshopDirs] };
+  return sourceLocations(installDir, workshopDirs, libraries);
 }

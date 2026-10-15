@@ -68,7 +68,8 @@ export async function readText(filename: string) {
           current.ino !== before.ino || current.size !== before.size || current.mtimeMs !== before.mtimeMs || current.ctimeMs !== before.ctimeMs) {
         throw new CatalogError('SOURCE_CHANGED', 'Source changed during scan; retry when Wallpaper Engine is idle.');
       }
-      return buffer.subarray(0, length).toString('utf8');
+      try { return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(buffer.subarray(0, length)); }
+      catch { throw new CatalogError('SOURCE_ENCODING', 'Source is not valid UTF-8.'); }
     } catch (error) {
       if (!(error instanceof CatalogError && error.code === 'SOURCE_CHANGED') || attempt === 2) throw error;
     } finally { await handle?.close(); }
