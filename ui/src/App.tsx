@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Playlist, Wallpaper } from "../../src/domain";
-import { loadLibrary, type Library } from "./api";
+import { action, loadLibrary, type Library } from "./api";
+import { Discover } from './Discover';
+import { Playback } from './Playback';
 
 function Preview({
   wallpaper,
@@ -57,6 +59,9 @@ function Setup({ command, indexed }: { command: string; indexed: boolean }) {
   );
 }
 export function App() {
+  const [view, setView] = useState<'library' | 'discover'>('library');
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState('');
   const [library, setLibrary] = useState<Library>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -135,6 +140,7 @@ export function App() {
     item.wallpaper ? matches(item.wallpaper) : !filtered,
   );
   function changePlaylist(id: string) {
+    setView('library');
     setPlaylistId(id);
     setSearch("");
     setType("");
@@ -199,11 +205,12 @@ export function App() {
           </button>
         </div>
       </header>
-      <div className={`workspace ${selectedWallpaper ? "has-detail" : ""}`}>
+      <div className={`workspace ${selectedWallpaper && view === 'library' ? "has-detail" : ""}`}>
         <nav className="playlist-rail" aria-label="Library and playlists">
+          <div className="view-navigation"><button className={`nav-item ${view === 'discover' ? 'is-selected' : ''}`} aria-current={view === 'discover' ? 'page' : undefined} onClick={() => setView('discover')}>Discover</button></div>
           <button
-            className={`nav-item library-nav ${!playlistId ? "is-selected" : ""}`}
-            aria-current={!playlistId ? "page" : undefined}
+            className={`nav-item library-nav ${!playlistId && view === 'library' ? "is-selected" : ""}`}
+            aria-current={!playlistId && view === 'library' ? "page" : undefined}
             onClick={() => changePlaylist("")}
           >
             All wallpapers <span>{library?.status.data.wallpapers ?? "—"}</span>
@@ -216,7 +223,7 @@ export function App() {
               <PlaylistButton
                 key={item.id}
                 playlist={item}
-                selected={playlistId === item.id}
+                selected={playlistId === item.id && view === 'library'}
                 onClick={() => changePlaylist(item.id)}
               />
             ))}
@@ -230,9 +237,10 @@ export function App() {
             <label htmlFor="playlist-view">View</label>
             <select
               id="playlist-view"
-              value={playlistId}
-              onChange={(event) => changePlaylist(event.target.value)}
+              value={view === 'discover' ? '__discover' : playlistId}
+              onChange={(event) => event.target.value === '__discover' ? setView('discover') : changePlaylist(event.target.value)}
             >
+              <option value="__discover">Discover wallpapers</option>
               <option value="">All wallpapers</option>
               {playlists.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -244,10 +252,18 @@ export function App() {
           <p className="local-note">
             Local library
             <br />
-            <span>Read-only view</span>
+            <span>Companion index and preferences</span>
           </p>
         </nav>
         <main id="library" className="library" tabIndex={-1}>
+          <div className="refresh-library"><button className="quiet-button" disabled={scanning || loading} onClick={async () => {
+            setScanning(true); setScanError('');
+            try { await action('/api/refresh', {}); setRefresh(value => value + 1); }
+            catch (error) { setScanError(error instanceof Error ? error.message : 'Library scan failed.'); }
+            finally { setScanning(false); }
+          }}>{scanning ? 'Scanning library…' : 'Refresh library'}</button><span className="field-note">Scan local sources into the companion index.</span></div>
+          {scanError && <p role="alert" className="workflow-notice">{scanError}</p>}
+          {view === 'discover' ? <Discover key={refresh} playlists={playlists} initialReference={playlistId} /> : <>
           <div className="library-heading">
             <div>
               <h1>{playlist?.name ?? "Your library"}</h1>
@@ -258,6 +274,7 @@ export function App() {
               </p>
             </div>
           </div>
+          {playlist && <Playback key={playlist.id} id={playlist.id} playlist />}
           {error && (
             <section className="error-state" role="alert">
               <h2>Couldn’t read your index</h2>
@@ -455,10 +472,7 @@ export function App() {
                               </div>
                             </dl>
                           </details>
-                          <p className="muted">
-                            Preview image only. Applying wallpapers stays in
-                            Wallpaper Engine.
-                          </p>
+                          {selectedWallpaper.availability === 'available' && <Playback key={selectedWallpaper.id} id={selectedWallpaper.id} />}
                         </div>
                       </aside>
                     )}
@@ -564,8 +578,7 @@ export function App() {
                   </summary>
                   <p>
                     Snapshot revision {library.status.indexRevision}. Reload
-                    view reads the saved index; run a new CLI scan to discover
-                    source changes.
+                    view reads the saved index; Refresh library scans local sources for changes.
                   </p>
                   <pre>
                     <code>{scanCommand}</code>
@@ -584,6 +597,7 @@ export function App() {
               </>
             )
           )}
+          </>}
         </main>
       </div>
     </>

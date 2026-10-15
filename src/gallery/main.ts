@@ -1,23 +1,21 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { Catalog } from "../catalog.js";
-import { CatalogError, type CatalogRepository } from "../domain.js";
 import { defaultDatabasePath } from "../adapters/database-path.js";
-import { SqliteCatalogRepository } from "../adapters/sqlite.js";
 import { createGalleryServer } from "./server.js";
+import { createCompanionRuntime } from '../workflow/runtime.js';
 
 const { values } = parseArgs({
   options: {
     db: { type: "string" },
+    preferences: { type: 'string' },
     port: { type: "string", default: "4318" },
     help: { type: "boolean" },
   },
 });
 if (values.help) {
   console.log(
-    "Wallpaper Companion gallery: --db <catalog.sqlite> --port <1..65535>\nOpen the printed 127.0.0.1 URL. Read-only; scanning stays in the CLI.",
+    "Wallpaper Companion gallery: --db <catalog.sqlite> --preferences <preferences.sqlite> --port <1..65535>\nOpen the printed 127.0.0.1 URL. Guided discovery, explicit refresh and playback actions.",
   );
 } else {
   const port = Number(values.port);
@@ -29,20 +27,10 @@ if (values.help) {
   )
     throw new Error("Port must be between 1 and 65535.");
   const database = path.resolve(values.db ?? defaultDatabasePath());
-  let repository: CatalogRepository | undefined;
-  const empty = new Catalog({
-    read: () => null,
-    close() {},
-    replace() {
-      throw new CatalogError("READ_ONLY", "Gallery is read-only.");
-    },
-  });
+  const companion = createCompanionRuntime(database, values.preferences);
   const server = createGalleryServer({
-    catalog: () => {
-      if (!repository && existsSync(database))
-        repository = new SqliteCatalogRepository(database, true);
-      return repository ? new Catalog(repository) : empty;
-    },
+    catalog: () => companion.catalog,
+    companion,
     uiDirectory: fileURLToPath(new URL("../../../ui-dist/", import.meta.url)),
     scanCommand: values.db
       ? `node dist/src/cli.js scan --db '${database.replaceAll("'", "''")}' --json`
@@ -54,17 +42,17 @@ if (values.help) {
         ? "Gallery port is in use. Choose another with --port."
         : "Gallery could not start. Check the port and local network permissions.",
     );
-    repository?.close();
+    companion.close();
     process.exitCode = 1;
   });
   server.listen(port, "127.0.0.1", () =>
     console.log(
-      `Wallpaper Companion: http://127.0.0.1:${port}\nRead-only local gallery. Press Ctrl+C to stop.`,
+      `Wallpaper Companion: http://127.0.0.1:${port}\nLocal gallery and discovery. Press Ctrl+C to stop.`,
     ),
   );
   const stop = () =>
     server.close(() => {
-      repository?.close();
+      companion.close();
       process.exitCode = 0;
     });
   process.once("SIGINT", stop);

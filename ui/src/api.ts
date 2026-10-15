@@ -44,3 +44,10 @@ export async function loadLibrary(signal: AbortSignal): Promise<Library> {
   ]);
   return { status, wallpapers, playlists };
 }
+export async function action<T>(url: string, input: unknown): Promise<T> {
+  const session = await request<{ csrf: string }>('/api/session', new AbortController().signal);
+  const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Companion-CSRF': session.csrf }, body: JSON.stringify(input) });
+  const value = await response.json();
+  if (!response.ok) throw new Error(`${value.error?.message ?? 'Action failed.'}${value.error?.mayHaveApplied ? ' Playback may have changed. Read current state before retrying.' : ''}`);
+  return value as T;
+}
