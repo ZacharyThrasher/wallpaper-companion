@@ -103,6 +103,7 @@ test("shows loading before the real result, timestamp, and collapsed diagnostics
   );
   finish(library());
   await screen.findByRole("button", { name: "View Alpine light" });
+  expect(screen.getByRole("button", { name: "Reload view" })).toBeEnabled();
   expect(document.querySelector("time")).toHaveAttribute(
     "datetime",
     "2026-01-01T12:00:00.000Z",

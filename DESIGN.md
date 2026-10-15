@@ -206,7 +206,7 @@ Forms have modest rounded corners: tags, fields/navigation, controls, and imager
 
 Compact and familiar. Default buttons use raised charcoal, fine divider borders, the control radius, and the frontmatter padding, with a minimum height of (42px). Hover and pressed states use their extracted sibling tokens. Disabled buttons reduce opacity to (0.55) and show a wait cursor.
 
-Quiet buttons have a transparent resting surface and minimum height of (36px); they serve Refresh index and Close details. Text actions use sage ink with no border, a minimum height of (32px), and an underline on hover. All interactive controls retain visible keyboard focus.
+Quiet buttons have a transparent resting surface and minimum height of (36px); they serve Reload view and Close details. Text actions use sage ink with no border, a minimum height of (32px), and an underline on hover. All interactive controls retain visible keyboard focus.
 
 ### Inputs / Fields
 

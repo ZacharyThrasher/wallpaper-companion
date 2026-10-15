@@ -20,7 +20,7 @@ Make the existing local wallpaper library visible and understandable. The shared
 
 ## Operating Context
 
-An explicit CLI scan creates a companion-owned snapshot. The gallery reads that snapshot and registered local preview images. The index timestamp and unavailable entries must remain visible. Refresh reloads the snapshot; it does not scan or mutate Wallpaper Engine.
+An explicit CLI scan creates a companion-owned snapshot. The gallery reads that snapshot and registered local preview images. The index timestamp and unavailable entries must remain visible. Reload view reloads the snapshot; it does not scan or mutate Wallpaper Engine.
 
 ## Capabilities and Constraints
 

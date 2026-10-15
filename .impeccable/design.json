@@ -314,7 +314,7 @@
       "kind": "button",
       "refersTo": "button-quiet",
       "description": "Subordinate header and detail actions.",
-      "html": "<button class=\"ds-quiet\">Refresh index</button>",
+      "html": "<button class=\"ds-quiet\">Reload view</button>",
       "css": ".ds-quiet{font-family:\"Segoe UI\",system-ui,sans-serif;font-size:.8rem;color:#edeeed;background:transparent;border:1px solid var(--line,#363b3c);border-radius:6px;padding:7px 10px;min-height:36px;cursor:pointer}.ds-quiet:hover{background:#303536}.ds-quiet:active{background:#3b4341}.ds-quiet:focus-visible{outline:2px solid var(--focus,#c5e8ff);outline-offset:4px;}.ds-quiet:disabled{opacity:.55;cursor:wait}"
     },
     {

@@ -49,7 +49,7 @@ function Setup({ command, indexed }: { command: string; indexed: boolean }) {
         <code>{command}</code>
       </pre>
       <p className="muted">
-        Then choose Refresh index above. Use the CLI’s <code>--help</code> for
+        Then choose Reload view above. Use the CLI’s <code>--help</code> for
         Steam path and profile options. Your Wallpaper Engine files stay
         untouched.
       </p>
@@ -190,7 +190,7 @@ export function App() {
             disabled={loading}
             onClick={() => setRefresh((value) => value + 1)}
           >
-            {loading ? "Loading index…" : "Refresh index"}
+            {loading ? "Loading index…" : "Reload view"}
           </button>
         </div>
       </header>
@@ -259,7 +259,7 @@ export function App() {
               <p>{error}</p>
               <p>
                 Check that the local server is running. If the index changed
-                during loading, refresh to load it again.
+                during loading, reload the view to load it again.
               </p>
               <button
                 onClick={() => setRefresh((value) => value + 1)}
@@ -558,7 +558,7 @@ export function App() {
                       : ""}
                   </summary>
                   <p>
-                    Snapshot revision {library.status.indexRevision}. Refresh
+                    Snapshot revision {library.status.indexRevision}. Reload view
                     reads the saved index; run a new CLI scan to discover source
                     changes.
                   </p>
