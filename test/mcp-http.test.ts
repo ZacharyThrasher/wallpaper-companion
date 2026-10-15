@@ -8,6 +8,7 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { Catalog } from '../src/catalog.js';
 import type { ReadOnlyCatalog } from '../src/mcp/server.js';
 import { configFromEnv, readScope, type AuthConfig } from '../src/mcp-http/config.js';
+import { createAuthenticator } from '../src/mcp-http/auth.js';
 import { maxBodyBytes, requestDeadlineMs, startHttpMcp } from '../src/mcp-http/server.js';
 
 // Synthetic secrets, subjects, paths, and keys only; never use the user's catalog or accounts.
@@ -174,6 +175,65 @@ test('OAuth JWKS failures fail closed without exposing resolver errors', async t
   assert.equal(f.reads(), 0);
 });
 
+test('production JOSE resolver uses only configured HTTPS keys, caches, and bounds retrieval', async t => {
+  const jwks = { keys: [{ ...await exportJWK(keys.publicKey), kid: 'fixture', alg: 'ES256' }] };
+  await t.test('fixed URL, no redirects, successful cache and unknown-key cooldown', async t => {
+    let fetches = 0;
+    t.mock.method(globalThis, 'fetch', async (input: string, options: RequestInit) => {
+      fetches++;
+      assert.equal(input, oauth.jwksUrl); assert.equal(options.redirect, 'manual');
+      assert.equal(options.method, 'GET'); assert.ok(options.signal instanceof AbortSignal);
+      return Response.json(jwks);
+    });
+    const auth = createAuthenticator(oauth);
+    const signed = await jwt({}, keys.privateKey, { jku: 'https://untrusted.example/keys' });
+    assert.equal(await auth(`Bearer ${signed}`), 'allowed');
+    assert.equal(await auth(`Bearer ${signed}`), 'allowed');
+    assert.equal(await auth(`Bearer ${await jwt({}, keys.privateKey, { kid: 'unknown' })}`), 'invalid_token');
+    assert.equal(fetches, 1, 'cached keys and successful-fetch cooldown prevent repeated retrieval');
+  });
+  for (const [name, response] of [
+    ['redirect', () => new Response('', { status: 302, headers: { location: 'https://untrusted.example/keys' } })],
+    ['oversized keys body', () => new Response('x'.repeat(65_537))],
+    ['too many keys', () => Response.json({ keys: Array.from({ length: 65 }, () => jwks.keys[0]) })],
+    ['malformed key JSON', () => new Response('{')]
+  ] as const) {
+    await t.test(name, async t => {
+      t.mock.method(globalThis, 'fetch', async () => response());
+      assert.equal(await createAuthenticator(oauth)(`Bearer ${await jwt()}`), 'invalid_token');
+    });
+  }
+  await t.test('fetch deadline fails closed', { timeout: 5_000 }, async t => {
+    t.mock.method(globalThis, 'fetch', async (_input: string, options: RequestInit) => new Promise((_resolve, reject) => {
+      options.signal!.addEventListener('abort', () => reject(options.signal!.reason), { once: true });
+    }));
+    const start = Date.now();
+    assert.equal(await createAuthenticator(oauth)(`Bearer ${await jwt()}`), 'invalid_token');
+    assert.ok(Date.now() - start < 4_500);
+  });
+});
+
+test('duplicate security headers and oversized HTTP headers are rejected before catalog access', async t => {
+  const f = fixture(); const server = await startHttpMcp(f.catalog, { port: 0, auth: bearer }); t.after(server.close);
+  const host = new URL(server.url).host;
+  for (const [name, value] of [['Host', host], ['Origin', `http://${host}`], ['Authorization', `Bearer ${token}`]]) {
+    const status = await new Promise<number>((resolve, reject) => {
+      const headers = ['Host', host, 'Authorization', `Bearer ${token}`, 'Content-Type', 'application/json'];
+      if (name === 'Origin') headers.push(name!, value!);
+      headers.push(name!, value!);
+      const req = request(server.url, { method: 'POST', headers }, res => {
+        res.resume(); res.on('end', () => resolve(res.statusCode!));
+      });
+      req.on('error', reject); req.end();
+    });
+    assert.equal(status, 400, name);
+  }
+  const response = await http(server.url, { headers: { ...requestHeaders, 'x-oversized': 'private'.repeat(3_000) } });
+  assert.equal(response.status, 400);
+  assert.deepEqual(JSON.parse(response.text), { error: 'Invalid HTTP request.' });
+  assert.equal(f.reads(), 0);
+});
+
 test('HTTP bounds reject oversized declared and chunked bodies, malformed JSON, encoding, and unsupported methods', async t => {
   const f = fixture(); const server = await startHttpMcp(f.catalog, { port: 0, auth: bearer }); t.after(server.close);
   for (const options of [
@@ -216,6 +276,7 @@ test('configuration fails closed and CLI errors/help do not expose environment s
   }
   assert.equal(configFromEnv(valid).port, 3211);
   for (const changes of [{ resource: 'http://catalog.example/mcp' }, { resource: 'https://catalog.example/other' },
+    { resource: 'https://catalog.example/mcp#' }, { resource: 'https://catalog.example/mcp?' },
     { issuer: 'https://user:pass@identity.example/' }, { jwksUrl: 'http://identity.example/keys' }, { subjects: [] }]) {
     await assert.rejects(startHttpMcp(fixture().catalog, { port: 0, auth: { ...oauth, ...changes } }));
   }
@@ -248,7 +309,12 @@ test('absolute deadline bounds an incomplete authenticated body', { timeout: req
 test('stop closes active/incomplete connections within a bound and is idempotent', async t => {
   const server = await startHttpMcp(fixture().catalog, { port: 0, auth: bearer }); t.after(server.close);
   const req = request(server.url, { method: 'POST', headers: requestHeaders });
-  req.on('error', () => {}); req.write('{'); t.after(() => req.destroy());
+  req.on('error', () => {});
+  const connected = new Promise<void>(resolve => req.once('socket', socket => socket.once('connect', resolve)));
+  req.write('{'); t.after(() => req.destroy());
+  await connected;
+  // Let the partial HTTP request arrive before testing shutdown's connection deadline.
+  await new Promise<void>(resolve => setTimeout(resolve, 20));
   const started = Date.now();
   await server.close(); await server.close();
   assert.ok(Date.now() - started < 3_000);

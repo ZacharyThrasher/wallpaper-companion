@@ -11,7 +11,10 @@ function remoteKeys(url: string): JWTVerifyGetKey {
     timeoutDuration: 3_000, cooldownDuration: 30_000, cacheMaxAge: 600_000,
     [customFetch]: async (input, options) => {
       const response = await fetch(input, options); // jose requests redirect: manual and supplies an abort signal.
-      if (response.status !== 200 || !response.body) throw new Error('JWKS unavailable.');
+      if (response.status !== 200 || !response.body) {
+        await response.body?.cancel();
+        throw new Error('JWKS unavailable.');
+      }
       const reader = response.body.getReader();
       const chunks: Uint8Array[] = [];
       let size = 0;

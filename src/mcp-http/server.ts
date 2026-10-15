@@ -57,13 +57,13 @@ export async function startHttpMcp(catalog: ReadOnlyCatalog, config: HttpConfig,
   let stopping = false;
   const publicUrl = auth.mode === 'oauth' ? new URL(auth.resource) : undefined;
   const server = createServer({ maxHeaderSize: 16_384, requestTimeout: requestDeadlineMs,
-    headersTimeout: 5_000, keepAliveTimeout: 1_000 }, (req, res) => {
+    headersTimeout: 5_000, connectionsCheckingInterval: 1_000, keepAliveTimeout: 1_000 }, (req, res) => {
     res.setHeader('cache-control', 'no-store');
     res.setHeader('x-content-type-options', 'nosniff');
     const timer = setTimeout(() => {
-      jsonError(res, 408, 'Request timed out.');
       // Finish the fixed error first; then abort any incomplete body/SDK exchange.
       res.once('finish', () => req.destroy());
+      jsonError(res, 408, 'Request timed out.');
     }, requestDeadlineMs);
     timer.unref();
     const clear = () => clearTimeout(timer);

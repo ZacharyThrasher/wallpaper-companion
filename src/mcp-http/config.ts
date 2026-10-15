@@ -11,7 +11,7 @@ export function trustedHttpsUrl(value: string): URL {
   let url: URL;
   try { url = new URL(value); } catch { return invalid(); }
   if (url.protocol !== 'https:' || url.username || url.password || url.hash || url.search ||
-      /[\s\x00-\x1f\x7f"\\]/u.test(value)) invalid();
+      /[\s\x00-\x1f\x7f"\\?#]/u.test(value)) invalid();
   return url;
 }
 
