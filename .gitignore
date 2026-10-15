@@ -9,3 +9,5 @@ coverage/
 artifacts/
 playwright-report/
 test-results/
+ui-dist/
+.impeccable/review/

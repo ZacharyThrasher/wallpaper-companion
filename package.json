@@ -4,15 +4,38 @@
   "private": true,
   "type": "module",
   "description": "Read-only Wallpaper Engine library and playlist catalog",
-  "engines": { "node": ">=24.11.1 <25" },
+  "engines": {
+    "node": ">=24.11.1 <25"
+  },
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit",
-    "test": "npm run build && node --test dist/test/*.test.js",
-    "start": "node dist/src/cli.js"
+    "test": "npm run build && node --test dist/test/*.test.js dist/src/gallery/server.test.js && npm run check:ui && npm run test:ui && npm run build:ui",
+    "start": "node dist/src/cli.js",
+    "build:ui": "vite build --config ui/vite.config.ts",
+    "check:ui": "tsc -p ui/tsconfig.json",
+    "gallery": "node dist/src/gallery/main.js",
+    "gallery:build": "npm run build && npm run check:ui && npm run build:ui",
+    "gallery:demo": "node dist/src/gallery/demo.js",
+    "test:ui": "vitest run --config ui/vite.config.ts",
+    "test:gallery": "npm run build && node --test dist/src/gallery/server.test.js && npm run test:ui"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/node": "^24.10.0",
-    "typescript": "^5.9.3"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   }
 }

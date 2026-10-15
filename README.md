@@ -2,9 +2,40 @@
 
 A Windows companion for finding and organizing Wallpaper Engine wallpapers using your existing playlists and guidance.
 
+## Local visual gallery
+
+The gallery shows the saved catalog as an image-led library with title search, type/tag/availability filters, saved playlists in their original order, and a focused wallpaper detail view. Duplicate and unresolved playlist entries remain visible. Nothing in the gallery applies wallpapers or changes Wallpaper Engine configuration.
+
+```powershell
+npm ci
+npm run gallery:build
+node dist/src/cli.js scan --json
+npm run gallery
+```
+
+Open [the local gallery](http://127.0.0.1:4318). Stop it with Ctrl+C. Use `npm run gallery -- --port 4320 --db <file>` for another port or companion index. Run commands from this repository's root. A missing index shows the exact scan command in the UI; after scanning, choose **Refresh index**. Refresh reads the latest saved snapshot and does not initiate a scan. Filters apply to the current library or playlist, and **Clear filters** restores its entries.
+
+Choose a wallpaper to focus its image and details. **Escape** while in the detail panel, or **Close details**, returns keyboard focus to that wallpaper. On narrow windows, the playlist rail becomes a native view selector and details appear above the image grid. Source paths and index diagnostics are disclosed only when requested.
+
+The server binds only to `127.0.0.1`, requires that exact Host/port, rejects other origins and cross-site browser requests, and provides no CORS access. Use the printed IP address rather than `localhost`. It shares one read-only SQLite connection across requests. A database created after launch becomes available on Refresh. If the database file is manually replaced, restart the gallery to open the replacement. Normal CLI scans update the same database transactionally.
+
+Previews accept a catalog wallpaper ID only. Each read rechecks the registered project and preview paths, canonical containment, regular-file identity, and stable bounded bytes. PNG, JPEG, GIF, and WebP signatures are supported up to 16 MiB; SVG and other active formats are refused. Moved files, root aliases/junctions, and project-root paths whose canonical spelling differs from the index are refused conservatively, with an unavailable-preview state. No images are copied to the repository or an upload service. The API includes personal local metadata; any process running as your OS user can access loopback, so keep the index and machine private.
+
+For a synthetic preview that never scans your real library:
+
+```powershell
+npm run gallery:build
+npm run gallery:demo
+npm run gallery -- --db .local/gallery-demo/catalog.sqlite
+```
+
+This creates only generated sample imagery and sample playlists under ignored `.local/gallery-demo/`. It uses the real SQLite adapter and HTTP server. Start it while the regular gallery is stopped, or choose another `--port`.
+
+Checks: `npm test` runs the catalog and gallery HTTP tests, UI type checks, frontend state/keyboard/pagination tests, and production UI build. `npm run test:gallery` runs only gallery-related tests. For optional local screenshot review, install Microsoft Edge and run `node ui/review-capture.mjs` while the synthetic gallery runs on port 4318. This writes ignored private captures; it is never part of `npm test` or CI. See [the gallery handoff](docs/gallery-handoff.md) for verification and limits.
+
 The first feature is a read-only local catalog and CLI. An explicit scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands use the snapshot without rescanning. No wallpaper controls, installation, or source configuration writes are implemented.
 
-Requires Node **24.11.1 or newer in the 24.x line**. The built-in `node:sqlite` module is experimental and emits a warning to stderr; JSON output remains on stdout. No native compiled dependencies are installed.
+Requires Node **24.11.1 or newer in the 24.x line**. The built-in `node:sqlite` module is experimental and emits a warning to stderr; JSON output remains on stdout. The catalog needs no native SQLite addon.
 
 ```powershell
 npm ci
@@ -64,8 +95,8 @@ Developer interfaces are stable for the first adapters:
 | `src/adapters/sqlite.ts` | `SqliteCatalogRepository(filename, readOnly?)` implementing `read`, `replace`, `close` |
 | `src/cli.ts` | `run(argv, write?): Promise<number>`, path/default-index helpers |
 
-Future preview-serving adapters should call `Catalog.getPreview(wallpaperId)` and revalidate its registered project-relative path against disk before opening. This feature exposes no arbitrary-file serving endpoint. The service has no filesystem dependencies. The SQLite adapter reads and filters a complete snapshot in memory; this is suitable for the current local library size but needs reconsideration for very large catalogs.
+Preview-serving adapters call `Catalog.getPreview(wallpaperId)` and revalidate its registered project-relative path against disk before opening. The gallery implements this without an arbitrary-file serving endpoint. The catalog service has no filesystem dependencies. The SQLite adapter reads and filters a complete snapshot in memory; this is suitable for the current local library size but needs reconsideration for very large catalogs.
 
-Run `npm run check` and `npm test`. Tests use only temporary synthetic files and the built-in Node test runner. CI covers Windows and Linux, Node 24.11.1 and current 24.x. Node 24.11.1 was verified locally, including its experimental SQLite API. No MCP, GUI, taste inference, remote bridge, wallpaper control, automatic subscription, or client compatibility is included in this feature.
+Run `npm run check` and `npm test`. Tests use synthetic files with the built-in Node test runner and Vitest/Testing Library for the gallery. CI covers Windows and Linux, Node 24.11.1 and current 24.x. Node 24.11.1 was verified locally, including its experimental SQLite API. The local GUI is described above. No MCP, taste inference, remote bridge, wallpaper control, automatic subscription, or external-client compatibility is included in this feature.
 
-CEO brief: The CLI safely catalogs the local library and saved playlists, preserves unresolved entries, and keeps the previous index after failures. It supplies the shared backend for future interfaces. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
+Brief: The CLI safely catalogs the local library and saved playlists; the gallery makes their imagery and order easy to inspect. Both preserve unresolved entries, and a failed scan keeps the previous index. Local browser access is restricted to the loopback origin, and source configuration stays untouched. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
