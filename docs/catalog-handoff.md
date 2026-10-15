@@ -32,4 +32,4 @@ The single-row JSON snapshot keeps persistence and atomic replacement simple. It
 
 Next: coordinator reviews the draft and selects integration order; subsequent feature chats should branch after the reviewed catalog API is accepted.
 
-CEO brief: The first shared backend and CLI are implemented and locally validated, including a read-only live check. The coordinator still owns review, merge, and subsequent interface work. Remote CI cannot run because of the Actions budget. Main implementation limits are experimental SQLite, stale observations between scans, and in-memory snapshot scaling.
+Brief: The first shared backend and CLI are implemented and locally validated, including a read-only live check. The coordinator still owns review, merge, and subsequent interface work. Remote CI cannot run because of the Actions budget. Main implementation limits are experimental SQLite, stale observations between scans, and in-memory snapshot scaling.

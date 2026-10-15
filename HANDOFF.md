@@ -2,6 +2,8 @@
 
 Branch: `feature/local-mcp`. Draft PR targets `main`; coordinator owns review and merge. Catalog PR #1 merged at `8814e6e`, and this branch includes `origin/main`. Worktree: `C:/AI/lora/tools/wallpaper-companion-worktrees/mcp`. No other worktree was modified.
 
+Integration refresh: merged `origin/main` at `2d19351`, including Workshop, playback and Brief terminology changes. Resolved the README conflict by preserving the merged sections and catalog guarantees alongside the MCP overview; added the playback documentation link. No MCP or upstream feature logic changed. Combined `npm run check` and **53/53 `npm test` groups** pass locally. Current combined CI results are available on PR #2.
+
 ## Decisions and files
 
 - `src/mcp/server.ts` exports `createCatalogMcpServer(readOnlyCatalog)`. Its dependency type excludes catalog commits. Six tools expose status, wallpaper/playlist list/get, and preview path metadata. Strict Zod input objects reject unknown keys; page size is capped at 100, with bounded strings/integers and revision-aware pagination. All tools advertise read-only/idempotent/non-destructive/closed-world hints. Successful structured content preserves the domain envelope with projected data, accompanied by a concise summary and usable JSON text fallback identical to the projected object. Domain/index failures include the same fallback and an actionable structured error; SDK validation failures retain the SDK text error format.

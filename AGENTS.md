@@ -2,7 +2,7 @@
 
 ## Working agreement
 - No emojis in code-facing prose, UI, docs, commits, PRs, or chat.
-- Present dense information in scannable blocks with a brief CEO summary.
+- Present dense information in scannable blocks with a concise brief.
 - Coordinator owns architecture, product taste, integration, review, and release decisions.
 - Use GPT-6.1 Sol implementation/research agents with appropriate reasoning effort.
 - Research agents research only. Coordinator starts a separate implementation chat after findings.

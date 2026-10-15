@@ -2,7 +2,15 @@
 
 A Windows companion for finding and organizing Wallpaper Engine wallpapers using your existing playlists and guidance.
 
-The read-only local catalog is available through a CLI and a [local stdio MCP server](docs/local-mcp.md). An explicit CLI scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands and MCP tools use the snapshot without rescanning. No wallpaper controls, installation, or source configuration writes are implemented.
+The read-only local catalog is available through a CLI and a [local stdio MCP server](docs/local-mcp.md). An explicit CLI scan reads Steam/Wallpaper Engine metadata and replaces a companion-owned SQLite snapshot. Query commands and MCP tools use the snapshot without rescanning. The MCP interface exposes only catalog reads.
+
+An independent [Steam Workshop provider](docs/workshop.md) adds anonymous public
+item metadata and optional personal-key search for future interfaces. Search
+without a key returns a Steam handoff link and `credentials_required`.
+Credentialed search is not yet live-verified; subscription/download and credential
+setup UI are outside this feature.
+
+A separate [playback adapter](docs/playback.md) provides local playback controls.
 
 Requires Node **24.11.1 or newer in the 24.x line**. The built-in `node:sqlite` module is experimental and emits a warning to stderr; JSON output remains on stdout. No native compiled dependencies are installed.
 
@@ -68,4 +76,4 @@ Future preview-serving adapters should call `Catalog.getPreview(wallpaperId)` an
 
 Run `npm run check` and `npm test`. Tests use only temporary synthetic files and the built-in Node test runner. CI is configured for Windows and Linux, Node 24.11.1 and current 24.x; see the PR checks for current results. Node 24.11.1 was verified locally, including its experimental SQLite API. `npm run test:mcp` runs the MCP protocol checks. See [local MCP setup](docs/local-mcp.md) for the six tools, strict argument limits, compact projections, structured results with JSON text fallback, and Codex/Claude Code/Claude Desktop/Gemini CLI configuration examples. Those named clients have not been tested. GUI, taste inference, remote bridge, wallpaper control, and automatic subscription are not included.
 
-Brief: The CLI catalogs the local library and saved playlists, while the local MCP server lets AI clients query the same snapshot without writes. Named client setup still needs validation. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
+Brief: The CLI catalogs the local library and saved playlists, preserves unresolved entries, and keeps the previous index after failures. The local MCP server lets AI clients query the same snapshot without writes. Named client setup still needs validation. SQLite remains experimental; live files can change after a scan, so availability is an observation rather than a playback guarantee.
